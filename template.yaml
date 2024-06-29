@@ -1,0 +1,102 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: backop-backend
+
+Globals:
+  Function:
+    Timeout: 10
+    Tracing: Active
+  Api:
+    TracingEnabled: true
+
+Resources:
+  SignInFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: auth/
+      Handler: signin.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref UserPool
+          USER_POOL_CLIENT_ID: !Ref UserPoolClient
+      Events:
+        SignInEvent:
+          Type: Api
+          Properties:
+            Path: /sign-in
+            Method: post
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - signin.ts
+
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: BackopUserPool
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: BackopUserPoolClient
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+        - USER_PASSWORD_AUTH
+    
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name: !Join
+        - ''
+        - 
+          - ApplicationInsights-SAM-
+          - !Ref AWS::StackName
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName: !Join
+        - ''
+        - 
+          - ApplicationInsights-SAM-
+          - !Ref AWS::StackName
+      AutoConfigurationEnabled: true
+    DependsOn: ApplicationResourceGroup
+
+Outputs:
+  SignInApi:
+    Description: API Gateway endpoint URL for Prod stage for SignIn function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/sign-in/"
+  SignInFunction:
+    Description: SignIn Lambda Function ARN
+    Value: !GetAtt SignInFunction.Arn
+  SignInFunctionIamRole:
+    Description: Implicit IAM Role created for SignIn function
+    Value: !GetAtt SignInFunctionRole.Arn
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref UserPoolClient
