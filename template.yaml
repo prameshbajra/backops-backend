@@ -10,10 +10,63 @@ Globals:
     TracingEnabled: true
 
 Resources:
+  UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: BackopUserPool
+        AutoVerifiedAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+            RequireUppercase: true
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: BackopUserPoolClient
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+        - USER_PASSWORD_AUTH
+      IdTokenValidity: 24
+      AccessTokenValidity: 24
+      SupportedIdentityProviders:
+        - COGNITO
+
+  # API Gateway
+  BackopApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: Prod 
+      CorsConfiguration: 
+        AllowOrigins:
+          - "http://*"
+          - "https://*"
+        AllowHeaders:
+          - authorization
+        AllowMethods:
+          - GET
+        MaxAge: 3600
+      Auth:
+        DefaultAuthorizer: JWTTokenAuthorizer
+        Authorizers:
+          JWTTokenAuthorizer:
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
+              audience: 
+                - !Ref UserPoolClient
+            IdentitySource: "$request.header.Authorization"
+
+  # Functions
   SignInFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: auth/
+      CodeUri: lambdas/
       Handler: signin.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
@@ -37,31 +90,31 @@ Resources:
         EntryPoints:
           - signin.ts
 
-  UserPool:
-    Type: AWS::Cognito::UserPool
+  UploadFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      UserPoolName: BackopUserPool
-      AutoVerifiedAttributes:
-        - email
-      Policies:
-        PasswordPolicy:
-          MinimumLength: 8
-          RequireLowercase: true
-          RequireNumbers: true
-          RequireSymbols: true
-          RequireUppercase: true
+      CodeUri: lambdas/
+      Handler: uploadToS3.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /upload
+            Method: post 
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - uploadToS3.ts
 
-  UserPoolClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      ClientName: BackopUserPoolClient
-      UserPoolId: !Ref UserPool
-      GenerateSecret: false
-      ExplicitAuthFlows:
-        - ADMIN_NO_SRP_AUTH
-        - USER_PASSWORD_AUTH
-    
-
+  # Resource group or application insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
@@ -85,18 +138,14 @@ Resources:
     DependsOn: ApplicationResourceGroup
 
 Outputs:
-  SignInApi:
-    Description: API Gateway endpoint URL for Prod stage for SignIn function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/sign-in/"
-  SignInFunction:
-    Description: SignIn Lambda Function ARN
-    Value: !GetAtt SignInFunction.Arn
-  SignInFunctionIamRole:
-    Description: Implicit IAM Role created for SignIn function
-    Value: !GetAtt SignInFunctionRole.Arn
   UserPoolId:
-    Description: Cognito User Pool ID
+    Description: The ID of the Cognito User Pool
     Value: !Ref UserPool
+
   UserPoolClientId:
-    Description: Cognito User Pool Client ID
+    Description: The ID of the Cognito User Pool Client
     Value: !Ref UserPoolClient
+
+  ApiEndpoint:
+    Description: The endpoint of the API Gateway
+    Value: !Sub 'https://${BackopApi}.execute-api.${AWS::Region}.amazonaws.com/Prod'
