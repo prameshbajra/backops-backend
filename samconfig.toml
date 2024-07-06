@@ -17,7 +17,7 @@ lint = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = false
 region = "ap-south-1"
-disable_rollback = true
+disable_rollback = false
 image_repositories = []
 s3_bucket = "backops-deployment"
 

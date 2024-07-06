@@ -10,6 +10,15 @@ Globals:
     TracingEnabled: true
 
 Resources:
+  # S3 bucket
+  UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: "backop-upload-bucket"
+      AccelerateConfiguration:
+        AccelerationStatus: Enabled
+
+  # Cognito
   UserPool:
       Type: AWS::Cognito::UserPool
       Properties:
@@ -51,6 +60,7 @@ Resources:
           - authorization
         AllowMethods:
           - GET
+          - POST
         MaxAge: 3600
       Auth:
         DefaultAuthorizer: JWTTokenAuthorizer
@@ -96,6 +106,8 @@ Resources:
       CodeUri: lambdas/
       Handler: uploadToS3.lambdaHandler
       Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
       Architectures:
         - arm64
       Events:
@@ -105,6 +117,13 @@ Resources:
             ApiId: !Ref BackopApi 
             Path: /upload
             Method: post 
+      Environment:
+          Variables:
+            BUCKET_NAME: !Ref UploadBucket
+            EXPIRATION_TIME: 300
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref UploadBucket
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -136,16 +155,3 @@ Resources:
           - !Ref AWS::StackName
       AutoConfigurationEnabled: true
     DependsOn: ApplicationResourceGroup
-
-Outputs:
-  UserPoolId:
-    Description: The ID of the Cognito User Pool
-    Value: !Ref UserPool
-
-  UserPoolClientId:
-    Description: The ID of the Cognito User Pool Client
-    Value: !Ref UserPoolClient
-
-  ApiEndpoint:
-    Description: The endpoint of the API Gateway
-    Value: !Sub 'https://${BackopApi}.execute-api.${AWS::Region}.amazonaws.com/Prod'
