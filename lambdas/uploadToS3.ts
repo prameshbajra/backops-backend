@@ -1,11 +1,12 @@
 import { CreateMultipartUploadCommand, S3Client, UploadPartCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { APIGatewayProxyHandler } from 'aws-lambda';
+import { HEADERS } from './headers';
 
 const client = new S3Client({ region: process.env.AWS_REGION, useAccelerateEndpoint: true });
 const BUCKET_NAME = process.env.BUCKET_NAME as string;
 const EXPIRATION_TIME = process.env.EXPIRATION_TIME as string;
-const PART_SIZE = 1 * 1024 * 1024; // 1 MB
+const PART_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => {
     const body = JSON.parse(event.body || '{}');
@@ -46,11 +47,13 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
 
         return {
             statusCode: 200,
+            headers: HEADERS,
             body: JSON.stringify({ uploadId: UploadId, presignedUrls }),
         };
     } catch (error) {
         return {
             statusCode: 500,
+            headers: HEADERS,
             body: JSON.stringify({ error }),
         };
     }
