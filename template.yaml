@@ -72,6 +72,7 @@ Resources:
   BackopApi:
     Type: AWS::Serverless::HttpApi
     Properties:
+      Description: APIs that need authentication uses this API gateway
       StageName: Prod 
       CorsConfiguration:
         AllowOrigins:
@@ -82,6 +83,8 @@ Resources:
         AllowMethods:
           - GET
           - POST
+          - PUT
+          - DELETE
         MaxAge: 3600
       Auth:
         DefaultAuthorizer: JWTTokenAuthorizer
@@ -92,6 +95,24 @@ Resources:
               audience: 
                 - !Ref UserPoolClient
             IdentitySource: "$request.header.Authorization"
+
+  BackopOpenApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Description: APIs that do not need authentication uses this API gateway
+      StageName: Prod 
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        MaxAge: 3600
 
   # Functions
   SignInFunction:
@@ -107,11 +128,12 @@ Resources:
           USER_POOL_ID: !Ref UserPool
           USER_POOL_CLIENT_ID: !Ref UserPoolClient
       Events:
-        SignInEvent:
-          Type: Api
+        UploadEvent:
+          Type: HttpApi
           Properties:
+            ApiId: !Ref BackopOpenApi 
             Path: /sign-in
-            Method: post
+            Method: post 
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

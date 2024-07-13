@@ -4,6 +4,7 @@ import {
     RespondToAuthChallengeCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { APIGatewayProxyHandler } from 'aws-lambda';
+import { HEADERS } from './headers';
 
 const cognitoClient = new CognitoIdentityProvider({ region: process.env.AWS_REGION });
 
@@ -36,12 +37,14 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
             console.log(challengeResponse);
             return {
                 statusCode: 200,
+                headers: HEADERS,
                 body: JSON.stringify(challengeResponse),
             };
         } else {
             console.log(authResponse);
             return {
                 statusCode: 200,
+                headers: HEADERS,
                 body: JSON.stringify(authResponse),
             };
         }
@@ -49,6 +52,7 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
         console.error(err);
         return {
             statusCode: 500,
+            headers: HEADERS,
             body: JSON.stringify(err),
         };
     }
