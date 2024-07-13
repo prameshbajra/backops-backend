@@ -22,6 +22,7 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
         });
 
         if (authResponse.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
+            console.log('First time login, changing password ...');
             const challengeResponse: RespondToAuthChallengeCommandOutput = await cognitoClient.respondToAuthChallenge({
                 ClientId: process.env.USER_POOL_CLIENT_ID,
                 ChallengeName: 'NEW_PASSWORD_REQUIRED',

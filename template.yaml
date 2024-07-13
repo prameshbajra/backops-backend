@@ -31,6 +31,13 @@ Resources:
             ExposedHeaders:
               - ETag
             MaxAge: 3000
+      LifecycleConfiguration:
+        Rules:
+          - Id: "MoveToIntelligentTiering"
+            Status: Enabled
+            Transitions:
+              - StorageClass: INTELLIGENT_TIERING
+                TransitionInDays: 0  # Transition immediately
 
   # Cognito
   UserPool:
