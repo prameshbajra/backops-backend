@@ -133,7 +133,7 @@ Resources:
           Properties:
             ApiId: !Ref BackopOpenApi 
             Path: /sign-in
-            Method: post 
+            Method: POST 
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -159,7 +159,7 @@ Resources:
           Properties:
             ApiId: !Ref BackopApi 
             Path: /upload
-            Method: post 
+            Method: POST 
       Environment:
           Variables:
             BUCKET_NAME: !Ref UploadBucket
@@ -192,7 +192,7 @@ Resources:
           Properties:
             ApiId: !Ref BackopApi 
             Path: /complete
-            Method: post 
+            Method: POST 
       Environment:
           Variables:
             BUCKET_NAME: !Ref UploadBucket
@@ -207,6 +207,32 @@ Resources:
         Sourcemap: true
         EntryPoints:
           - completeUploadToS3.ts
+
+  GetLoggedInUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: getLoggedInUser.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /user
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getLoggedInUser.ts
 
   # Resource group or application insights
   ApplicationResourceGroup:
