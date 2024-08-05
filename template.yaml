@@ -63,10 +63,14 @@ Resources:
       ExplicitAuthFlows:
         - ADMIN_NO_SRP_AUTH
         - USER_PASSWORD_AUTH
-      IdTokenValidity: 24
-      AccessTokenValidity: 24
+      AccessTokenValidity: 300
+      IdTokenValidity: 300
+      TokenValidityUnits:
+        AccessToken: seconds
+        IdToken: seconds
       SupportedIdentityProviders:
         - COGNITO
+
 
   # API Gateway
   BackopApi:
@@ -143,6 +147,7 @@ Resources:
         EntryPoints:
           - signin.ts
 
+
   UploadFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -176,6 +181,7 @@ Resources:
         EntryPoints:
           - uploadToS3.ts
 
+
   CompleteUploadToS3Function:
     Type: AWS::Serverless::Function
     Properties:
@@ -208,6 +214,7 @@ Resources:
         EntryPoints:
           - completeUploadToS3.ts
 
+
   GetLoggedInUserFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -233,6 +240,33 @@ Resources:
         Sourcemap: true
         EntryPoints:
           - getLoggedInUser.ts
+
+
+  SignOutFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: signout.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /sign-out
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - signout.ts
 
   # Resource group or application insights
   ApplicationResourceGroup:
