@@ -3,12 +3,12 @@ import {
     InitiateAuthCommandOutput,
     RespondToAuthChallengeCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { APIGatewayProxyHandler } from 'aws-lambda';
-import { HEADERS } from './headers';
+import { APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from 'aws-lambda';
+import { internalServerErrorResponse, respond } from './utility';
 
 const cognitoClient = new CognitoIdentityProvider({ region: process.env.AWS_REGION });
 
-export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => {
+export const lambdaHandler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent, _context: Context) => {
     const body = JSON.parse(event.body || '{}');
     const { username, password } = body;
 
@@ -33,27 +33,12 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
                 },
                 Session: authResponse.Session,
             });
-
-            console.log(challengeResponse);
-            return {
-                statusCode: 200,
-                headers: HEADERS,
-                body: JSON.stringify(challengeResponse),
-            };
+            return respond(challengeResponse);
         } else {
-            console.log(authResponse);
-            return {
-                statusCode: 200,
-                headers: HEADERS,
-                body: JSON.stringify(authResponse),
-            };
+            return respond(authResponse);
         }
     } catch (err) {
         console.error(err);
-        return {
-            statusCode: 500,
-            headers: HEADERS,
-            body: JSON.stringify(err),
-        };
+        return internalServerErrorResponse(err);
     }
 };
