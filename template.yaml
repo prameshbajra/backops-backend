@@ -78,6 +78,9 @@ Resources:
     Properties:
       Description: APIs that need authentication uses this API gateway
       StageName: Prod 
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 10
       CorsConfiguration:
         AllowOrigins:
           - "*"
@@ -105,6 +108,9 @@ Resources:
     Properties:
       Description: APIs that do not need authentication uses this API gateway
       StageName: Prod 
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 10
       CorsConfiguration:
         AllowOrigins:
           - "*"
