@@ -42,3 +42,8 @@ export const validateAccessToken = (event: APIGatewayProxyEvent): string | null 
     const accessToken = event.headers.authorization;
     return accessToken || null;
 };
+
+export const validateFileNames = (fileNames: unknown): string[] => {
+    if (!Array.isArray(fileNames)) return [];
+    return fileNames;
+};
