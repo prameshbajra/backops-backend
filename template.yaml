@@ -247,6 +247,37 @@ Resources:
         EntryPoints:
           - getLoggedInUser.ts
 
+  ListObjectsInS3Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: listObjectsInS3.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /list-objects
+            Method: GET
+      Environment:
+          Variables:
+            BUCKET_NAME: !Ref UploadBucket
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref UploadBucket
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - listObjectsInS3.ts
 
   SignOutFunction:
     Type: AWS::Serverless::Function
