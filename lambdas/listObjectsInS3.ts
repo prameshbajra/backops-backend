@@ -32,7 +32,13 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
         });
 
         const { Contents } = await s3Client.send(command);
-        const items = Contents?.map((item) => item.Key) || [];
+        const items = Contents?.map((item) => ({
+            key: item.Key,
+            size: item.Size,
+            lastModified: item.LastModified,
+            eTag: item.ETag,
+            storageClass: item.StorageClass,
+        }));
         return respond(items);
     } catch (error) {
         console.error('Error listing S3 objects:', error);

@@ -63,11 +63,11 @@ Resources:
       ExplicitAuthFlows:
         - ADMIN_NO_SRP_AUTH
         - USER_PASSWORD_AUTH
-      AccessTokenValidity: 300
-      IdTokenValidity: 300
+      AccessTokenValidity: 24
+      IdTokenValidity: 24
       TokenValidityUnits:
-        AccessToken: seconds
-        IdToken: seconds
+        AccessToken: hours
+        IdToken: hours
       SupportedIdentityProviders:
         - COGNITO
 
