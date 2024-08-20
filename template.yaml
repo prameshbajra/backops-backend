@@ -220,6 +220,38 @@ Resources:
         EntryPoints:
           - completeUploadToS3.ts
 
+  DownloadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: downloadFileFromS3.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /download
+            Method: POST 
+      Environment:
+          Variables:
+            BUCKET_NAME: !Ref UploadBucket
+            EXPIRATION_TIME: 300
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref UploadBucket
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - downloadFileFromS3.ts
 
   GetLoggedInUserFunction:
     Type: AWS::Serverless::Function
