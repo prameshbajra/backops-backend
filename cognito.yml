@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cognito User Pool for backop-backend
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: BackopUserPool
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: BackopUserPoolClient
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ADMIN_NO_SRP_AUTH
+        - USER_PASSWORD_AUTH
+      AccessTokenValidity: 24
+      IdTokenValidity: 24
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+      SupportedIdentityProviders:
+        - COGNITO
+
+Outputs:
+  UserPool:
+    Value: !Ref UserPool
+  UserPoolClient:
+    Value: !Ref UserPoolClient

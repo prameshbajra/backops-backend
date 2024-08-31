@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: S3 Bucket for backop-backend
+
+Resources:
+  UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: "backop-upload-bucket"
+      AccelerateConfiguration:
+        AccelerationStatus: Enabled
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+            - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            ExposedHeaders:
+              - ETag
+            MaxAge: 3000
+      LifecycleConfiguration:
+        Rules:
+          - Id: "MoveToIntelligentTiering"
+            Status: Enabled
+            Transitions:
+              - StorageClass: INTELLIGENT_TIERING
+                TransitionInDays: 0
+
+Outputs:
+  UploadBucket:
+    Value: !Ref UploadBucket

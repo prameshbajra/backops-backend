@@ -1,0 +1,314 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: API Gateway and Lambda Functions for backop-backend
+
+Parameters:
+  UserPool:
+    Type: String
+  UserPoolClient:
+    Type: String
+  UploadBucket:
+    Type: String
+
+Resources:
+  BackopApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Description: APIs that need authentication
+      StageName: Prod 
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 10
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        MaxAge: 3600
+      Auth:
+        DefaultAuthorizer: JWTTokenAuthorizer
+        Authorizers:
+          JWTTokenAuthorizer:
+            JwtConfiguration:
+              issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
+              audience: 
+                - !Ref UserPoolClient
+            IdentitySource: "$request.header.Authorization"
+
+  BackopOpenApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Description: APIs that do not need authentication
+      StageName: Prod 
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 10
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        MaxAge: 3600
+
+  # Functions
+  SignInFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: signin.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+        - arm64
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref UserPool
+          USER_POOL_CLIENT_ID: !Ref UserPoolClient
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopOpenApi 
+            Path: /sign-in
+            Method: POST 
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - signin.ts
+
+
+  UploadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: uploadToS3.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /upload
+            Method: POST 
+      Environment:
+          Variables:
+            BUCKET_NAME: !Ref UploadBucket
+            EXPIRATION_TIME: 300
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref UploadBucket
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - uploadToS3.ts
+
+
+  CompleteUploadToS3Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: completeUploadToS3.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        CompeleteUploadToS3Event:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /complete
+            Method: POST 
+      Environment:
+          Variables:
+            BUCKET_NAME: !Ref UploadBucket
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref UploadBucket
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - completeUploadToS3.ts
+
+  DownloadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: downloadFileFromS3.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /download
+            Method: POST 
+      Environment:
+          Variables:
+            BUCKET_NAME: !Ref UploadBucket
+            EXPIRATION_TIME: 300
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref UploadBucket
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - downloadFileFromS3.ts
+
+  GetLoggedInUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: getLoggedInUser.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /user
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getLoggedInUser.ts
+
+  ListObjectsInS3Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: listObjectsInS3.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /list-objects
+            Method: GET
+      Environment:
+          Variables:
+            BUCKET_NAME: !Ref UploadBucket
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref UploadBucket
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - listObjectsInS3.ts
+
+  DeleteObjectsInS3Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: deleteObjectsInS3.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /delete-objects
+            Method: DELETE
+      Environment:
+          Variables:
+            BUCKET_NAME: !Ref UploadBucket
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref UploadBucket
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - deleteObjectsInS3.ts
+
+  SignOutFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: signout.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi 
+            Path: /sign-out
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - signout.ts
+
+Outputs:
+  BackopApi:
+    Value: !Ref BackopApi
+  BackopOpenApi:
+    Value: !Ref BackopOpenApi

@@ -1,32 +1,9 @@
-# More information about the configuration file can be found here:
-# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-config.html
 version = 0.1
-
-[default]
-[default.global.parameters]
-stack_name = "backop-backend"
-
-[default.build.parameters]
-cached = true
-parallel = true
-
-[default.validate.parameters]
-lint = true
-
 [default.deploy.parameters]
-capabilities = "CAPABILITY_IAM"
-confirm_changeset = false
+stack_name = "backops"
+resolve_s3 = false
+s3_prefix = "backops"
 region = "ap-south-1"
-disable_rollback = false
+capabilities = ['CAPABILITY_IAM', 'CAPABILITY_AUTO_EXPAND']
 image_repositories = []
-s3_bucket = "backops-deployment"
-
-
-[default.sync.parameters]
-watch = true
-
-[default.local_start_api.parameters]
-warm_containers = "EAGER"
-
-[default.local_start_lambda.parameters]
-warm_containers = "EAGER"
+s3_bucket="aws-sam-cli-managed-default-samclisourcebucket-w8dj7btx59k2"
