@@ -11,6 +11,7 @@ Parameters:
     Type: String
 
 Resources:
+  # APIs
   BackopApi:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -66,7 +67,7 @@ Resources:
   SignInFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: lambdas/src/
       Handler: signin.lambdaHandler
       Runtime: nodejs20.x
       Architectures:
@@ -91,11 +92,10 @@ Resources:
         EntryPoints:
           - signin.ts
 
-
   UploadFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: lambdas/src/
       Handler: uploadToS3.lambdaHandler
       Runtime: nodejs20.x
       MemorySize: 128
@@ -125,11 +125,10 @@ Resources:
         EntryPoints:
           - uploadToS3.ts
 
-
   CompleteUploadToS3Function:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: lambdas/src/
       Handler: completeUploadToS3.lambdaHandler
       Runtime: nodejs20.x
       MemorySize: 128
@@ -161,7 +160,7 @@ Resources:
   DownloadFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: lambdas/src/
       Handler: downloadFileFromS3.lambdaHandler
       Runtime: nodejs20.x
       MemorySize: 128
@@ -194,7 +193,7 @@ Resources:
   GetLoggedInUserFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: lambdas/src/
       Handler: getLoggedInUser.lambdaHandler
       Runtime: nodejs20.x
       MemorySize: 128
@@ -220,7 +219,7 @@ Resources:
   ListObjectsInS3Function:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: lambdas/src/
       Handler: listObjectsInS3.lambdaHandler
       Runtime: nodejs20.x
       MemorySize: 128
@@ -252,7 +251,7 @@ Resources:
   DeleteObjectsInS3Function:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: lambdas/src/
       Handler: deleteObjectsInS3.lambdaHandler
       Runtime: nodejs20.x
       MemorySize: 128
@@ -284,7 +283,7 @@ Resources:
   SignOutFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: lambdas/src/
       Handler: signout.lambdaHandler
       Runtime: nodejs20.x
       MemorySize: 128
@@ -307,8 +306,25 @@ Resources:
         EntryPoints:
           - signout.ts
 
+
 Outputs:
   BackopApi:
     Value: !Ref BackopApi
   BackopOpenApi:
     Value: !Ref BackopOpenApi
+  SignInFunction:
+    Value: !Ref SignInFunction
+  UploadFunction:
+    Value: !Ref UploadFunction
+  CompleteUploadToS3Function:
+    Value: !Ref CompleteUploadToS3Function
+  DownloadFunction:
+    Value: !Ref DownloadFunction
+  GetLoggedInUserFunction:
+    Value: !Ref GetLoggedInUserFunction
+  ListObjectsInS3Function:
+    Value: !Ref ListObjectsInS3Function
+  DeleteObjectsInS3Function:
+    Value: !Ref DeleteObjectsInS3Function  
+  SignOutFunction:
+    Value: !Ref SignOutFunction

@@ -1,12 +1,12 @@
 import { CompleteMultipartUploadCommand, S3Client } from '@aws-sdk/client-s3';
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import {
-    customErrorResponse,
+    validateAccessToken,
+    unauthorizedResponse,
     getUserInfo,
     internalServerErrorResponse,
+    customErrorResponse,
     respond,
-    unauthorizedResponse,
-    validateAccessToken,
 } from './utility';
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
