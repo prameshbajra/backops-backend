@@ -1,12 +1,44 @@
-import { S3Client } from '@aws-sdk/client-s3';
-import { Callback, Context, EventBridgeEvent, EventBridgeHandler, Handler, S3Event, S3Handler } from 'aws-lambda';
+import { Context, EventBridgeEvent, EventBridgeHandler } from 'aws-lambda';
+import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { marshall } from '@aws-sdk/util-dynamodb';
 
-const s3Client = new S3Client({ region: process.env.AWS_REGION, useAccelerateEndpoint: true });
-const BUCKET_NAME = process.env.BUCKET_NAME as string;
 const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE as string;
 
-export const lambdaHandler: Handler = async (event: Event, _context: Context) => {
-    console.log('Records: ', event);
-    console.log('Context: ', _context);
-    console.log('BUCKET_NAME and TABLE_NAME', BUCKET_NAME, DYNAMODB_TABLE);
+interface S3ObjectDetail {
+    key: string;
+    size: number;
+}
+
+// Initialize DynamoDB client
+const dynamoDbClient = new DynamoDBClient({});
+
+export const lambdaHandler: EventBridgeHandler<'ObjectCreated', { object: S3ObjectDetail }, void> = async (
+    event: EventBridgeEvent<'ObjectCreated', { object: S3ObjectDetail }>,
+    _context: Context,
+) => {
+    const fileDetails = event.detail.object;
+    const { key, size } = fileDetails;
+    const [userId, fileName] = key.split('/');
+
+    const currentDate = new Date().toISOString();
+    const item = {
+        userId: userId,
+        date: currentDate,
+        fileName: fileName,
+        fileSize: size,
+    };
+    console.log('Item to be inserted into DynamoDB:', item);
+
+    const params = {
+        TableName: DYNAMODB_TABLE,
+        Item: marshall(item),
+    };
+
+    try {
+        const command = new PutItemCommand(params);
+        await dynamoDbClient.send(command);
+        console.log('Data successfully inserted into DynamoDB');
+    } catch (error) {
+        console.error('Error inserting data into DynamoDB:', error);
+    }
 };
