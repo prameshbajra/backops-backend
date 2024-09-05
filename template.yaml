@@ -15,6 +15,11 @@ Resources:
     Properties:
       Location: cognito.yml
 
+  DatabaseStack:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: database.yml
+
   # API Gateway Stack
   ApiLambdaStack:
     Type: AWS::Serverless::Application
@@ -24,3 +29,4 @@ Resources:
         UserPool: !GetAtt CognitoStack.Outputs.UserPool
         UserPoolClient: !GetAtt CognitoStack.Outputs.UserPoolClient
         UploadBucket: !GetAtt S3Stack.Outputs.UploadBucket
+        DynamoDBTable: !GetAtt DatabaseStack.Outputs.DynamoDBTable

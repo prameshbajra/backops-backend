@@ -8,6 +8,9 @@ Resources:
       BucketName: "backop-upload-bucket"
       AccelerateConfiguration:
         AccelerationStatus: Enabled
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:

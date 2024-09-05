@@ -9,6 +9,8 @@ Parameters:
     Type: String
   UploadBucket:
     Type: String
+  DynamoDBTable:
+    Type: String
 
 Resources:
   # APIs
@@ -306,6 +308,45 @@ Resources:
         EntryPoints:
           - signout.ts
 
+  S3UploadProcessorFunction:
+      Type: AWS::Serverless::Function
+      Properties:
+        CodeUri: lambdas/src/
+        Handler: s3UploadProcessor.lambdaHandler
+        Runtime: nodejs20.x
+        MemorySize: 128
+        Timeout: 30
+        Architectures:
+          - arm64
+        Events:
+          S3EventBridgeRule:
+            Type: EventBridgeRule
+            Properties:
+              Pattern:
+                source:
+                  - aws.s3
+                detail:
+                  bucket:
+                    name:
+                      - !Ref UploadBucket
+        Environment:
+            Variables:
+              BUCKET_NAME: !Ref UploadBucket
+              EXPIRATION_TIME: 300
+              DYNAMODB_TABLE: !Ref DynamoDBTable
+        Policies:
+          - S3FullAccessPolicy:
+              BucketName: !Ref UploadBucket
+          - DynamoDBCrudPolicy:
+              TableName: !Ref DynamoDBTable
+      Metadata:
+        BuildMethod: esbuild
+        BuildProperties:
+          Minify: true
+          Target: es2020
+          Sourcemap: true
+          EntryPoints:
+            - s3UploadProcessor.ts
 
 Outputs:
   BackopApi:
