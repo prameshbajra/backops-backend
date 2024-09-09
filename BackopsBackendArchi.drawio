@@ -1,9 +1,82 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36" version="24.7.12">
   <diagram name="Page-1" id="5c-N3aM7RLb5X0E32vks">
-    <mxGraphModel>
+    <mxGraphModel dx="1546" dy="1025" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="tYbbxvIeICveUMQb8AR5-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="tYbbxvIeICveUMQb8AR5-8" target="tYbbxvIeICveUMQb8AR5-12">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-15" value="Upload Trigger" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="tYbbxvIeICveUMQb8AR5-11">
+          <mxGeometry x="0.1396" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-8" value="" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.bucket_with_objects;fillColor=#E05243;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="600" y="200" width="60" height="61.5" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-9" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.06;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="tYbbxvIeICveUMQb8AR5-29" target="tYbbxvIeICveUMQb8AR5-8">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="160" y="240" as="sourcePoint" />
+            <mxPoint x="520" y="320" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="64" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-10" value="Upload to S3 bucket" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="tYbbxvIeICveUMQb8AR5-9">
+          <mxGeometry x="0.0046" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="tYbbxvIeICveUMQb8AR5-12" target="tYbbxvIeICveUMQb8AR5-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-12" value="generateThumbnail" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.lambda_function;" vertex="1" parent="1">
+          <mxGeometry x="779" y="410" width="48" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="tYbbxvIeICveUMQb8AR5-12" target="tYbbxvIeICveUMQb8AR5-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-14" value="Generates thumbnail to S3 bucket" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="tYbbxvIeICveUMQb8AR5-13">
+          <mxGeometry x="0.3488" y="-1" relative="1" as="geometry">
+            <mxPoint x="-1" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="tYbbxvIeICveUMQb8AR5-16" target="tYbbxvIeICveUMQb8AR5-21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-16" value="DBUpdateSNSTopic" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.sns;fillColor=#D9A741;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="990" y="399" width="67.5" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="tYbbxvIeICveUMQb8AR5-21" target="tYbbxvIeICveUMQb8AR5-23">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1164" y="860" />
+              <mxPoint x="803" y="860" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-21" value="updateRecordToDB" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.lambda_function;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="585" width="48" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="tYbbxvIeICveUMQb8AR5-23" target="tYbbxvIeICveUMQb8AR5-27">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-23" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;DynamoDB&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.dynamo_db;fillColor=#2E73B8;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="707" y="820" width="72" height="81" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="tYbbxvIeICveUMQb8AR5-27" target="tYbbxvIeICveUMQb8AR5-29">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-27" value="getObjectList&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.lambda_function;" vertex="1" parent="1">
+          <mxGeometry x="400" y="836.5" width="48" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="tYbbxvIeICveUMQb8AR5-29" value="User" style="image;aspect=fixed;perimeter=ellipsePerimeter;html=1;align=center;shadow=0;dashed=0;spacingTop=3;image=img/lib/active_directory/user.svg;" vertex="1" parent="1">
+          <mxGeometry x="30" y="480" width="68.5" height="185.14" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
