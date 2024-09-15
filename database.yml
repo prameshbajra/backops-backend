@@ -9,14 +9,14 @@ Resources:
     Properties:
       TableName: BackOpsTable
       AttributeDefinitions:
-        - AttributeName: userId
+        - AttributeName: PK
           AttributeType: S
-        - AttributeName: date
+        - AttributeName: SK
           AttributeType: S
       KeySchema:
-        - AttributeName: userId
+        - AttributeName: PK
           KeyType: HASH
-        - AttributeName: date
+        - AttributeName: SK
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 

@@ -96,6 +96,58 @@ Resources:
         EntryPoints:
           - signin.ts
 
+  GetLoggedInUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/
+      Handler: getLoggedInUser.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /user
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getLoggedInUser.ts
+
+  SignOutFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/
+      Handler: signout.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /sign-out
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - signout.ts
+
   UploadFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -194,64 +246,6 @@ Resources:
         EntryPoints:
           - downloadFileFromS3.ts
 
-  GetLoggedInUserFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/src/
-      Handler: getLoggedInUser.lambdaHandler
-      Runtime: nodejs20.x
-      MemorySize: 128
-      Timeout: 30
-      Architectures:
-        - arm64
-      Events:
-        UploadEvent:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref BackopApi
-            Path: /user
-            Method: GET
-    Metadata:
-      BuildMethod: esbuild
-      BuildProperties:
-        Minify: true
-        Target: es2020
-        Sourcemap: true
-        EntryPoints:
-          - getLoggedInUser.ts
-
-  ListObjectsInS3Function:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/src/
-      Handler: listObjectsInS3.lambdaHandler
-      Runtime: nodejs20.x
-      MemorySize: 128
-      Timeout: 30
-      Architectures:
-        - arm64
-      Events:
-        UploadEvent:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref BackopApi
-            Path: /list-objects
-            Method: GET
-      Environment:
-        Variables:
-          BUCKET_NAME: !Ref UploadBucket
-      Policies:
-        - S3FullAccessPolicy:
-            BucketName: !Ref UploadBucket
-    Metadata:
-      BuildMethod: esbuild
-      BuildProperties:
-        Minify: true
-        Target: es2020
-        Sourcemap: true
-        EntryPoints:
-          - listObjectsInS3.ts
-
   DeleteObjectsInS3Function:
     Type: AWS::Serverless::Function
     Properties:
@@ -283,32 +277,6 @@ Resources:
         Sourcemap: true
         EntryPoints:
           - deleteObjectsInS3.ts
-
-  SignOutFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/src/
-      Handler: signout.lambdaHandler
-      Runtime: nodejs20.x
-      MemorySize: 128
-      Timeout: 30
-      Architectures:
-        - arm64
-      Events:
-        UploadEvent:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref BackopApi
-            Path: /sign-out
-            Method: GET
-    Metadata:
-      BuildMethod: esbuild
-      BuildProperties:
-        Minify: true
-        Target: es2020
-        Sourcemap: true
-        EntryPoints:
-          - signout.ts
 
   GenerateThumbnailFunction:
     Type: AWS::Serverless::Function
@@ -361,6 +329,39 @@ Resources:
         EntryPoints:
           - generateThumbnail.ts
 
+  GetObjectListFunction: 
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/
+      Handler: getObjectList.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /objects
+            Method: POST
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getObjectList.ts
+
+
   ## Sharp lambda layer
   SharpLayer:
     Type: AWS::Serverless::LayerVersion
@@ -388,8 +389,6 @@ Outputs:
     Value: !Ref DownloadFunction
   GetLoggedInUserFunction:
     Value: !Ref GetLoggedInUserFunction
-  ListObjectsInS3Function:
-    Value: !Ref ListObjectsInS3Function
   DeleteObjectsInS3Function:
     Value: !Ref DeleteObjectsInS3Function
   SignOutFunction:

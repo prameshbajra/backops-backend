@@ -47,8 +47,8 @@ const generateThumbnail = async (key: string): Promise<Buffer> => {
 const saveDataToDynamoDb = async (userId: string, fileName: string, size: number, thumbnailKey: string) => {
     const currentDate = new Date().toISOString();
     const item = {
-        userId: userId,
-        date: currentDate,
+        PK: userId,
+        SK: currentDate,
         fileName: fileName,
         fileSize: size,
         thumbnailKey: thumbnailKey,
