@@ -6,6 +6,8 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: "backop-thumbnail-bucket"
+      AccelerateConfiguration:
+        AccelerationStatus: Enabled
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders:

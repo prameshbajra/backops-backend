@@ -11,7 +11,7 @@ const UPLOAD_BUCKET_NAME = process.env.UPLOAD_BUCKET_NAME as string;
 const THUMBNAIL_BUCKET_NAME = process.env.THUMBNAIL_BUCKET_NAME as string;
 const THUMBNAIL_WIDTH = 200;
 
-const s3Client = new S3Client({ region: process.env.AWS_REGION });
+const s3Client = new S3Client({ region: process.env.AWS_REGION, useAccelerateEndpoint: true });
 const dynamoDbClient = new DynamoDBClient({});
 
 interface S3ObjectDetail {
@@ -44,14 +44,13 @@ const generateThumbnail = async (key: string): Promise<Buffer> => {
     return thumbnailBuffer;
 };
 
-const saveDataToDynamoDb = async (userId: string, fileName: string, size: number, thumbnailKey: string) => {
+const saveDataToDynamoDb = async (userId: string, fileName: string, size: number) => {
     const currentDate = new Date().toISOString();
     const item = {
         PK: userId,
         SK: currentDate,
         fileName: fileName,
         fileSize: size,
-        thumbnailKey: thumbnailKey,
     };
     console.log('Item to be inserted into DynamoDB:', item);
 
@@ -81,7 +80,7 @@ export const lambdaHandler: EventBridgeHandler<'ObjectCreated', { object: S3Obje
         const thumbnailBuffer = await generateThumbnail(key);
         const thumbnailKey = await uploadThumbnail(userId, fileName, thumbnailBuffer);
         console.log('Thumbnail generated and uploaded: ', thumbnailKey);
-        await saveDataToDynamoDb(userId, fileName, size, thumbnailKey);
+        await saveDataToDynamoDb(userId, fileName, size);
     } catch (error) {
         console.error('Error generating or saving thumbnail:', error);
     }

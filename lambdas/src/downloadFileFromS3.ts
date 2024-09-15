@@ -10,7 +10,8 @@ import {
 } from './utility';
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION, useAccelerateEndpoint: true });
-const BUCKET_NAME = process.env.BUCKET_NAME as string;
+const UPLOAD_BUCKET_NAME = process.env.UPLOAD_BUCKET_NAME as string;
+const THUMBNAIL_BUCKET_NAME = process.env.THUMBNAIL_BUCKET_NAME as string;
 const EXPIRY_TIME_IN_SECONDS = 24 * 60 * 60; // 24 hours
 
 export const lambdaHandler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent, _context: Context) => {
@@ -27,17 +28,28 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event: APIGatewayPro
     }
 
     const body = JSON.parse(event.body || '{}');
-    const { fileName } = body;
-    const key = `${cognitoUserId}/${fileName}`;
+    const { fileNames, getThumbnail } = body;
+
+    if (!Array.isArray(fileNames)) {
+        return internalServerErrorResponse('fileNames should be an array');
+    }
 
     try {
-        const getObjectCommand = new GetObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: key,
-        });
+        const signedUrls: { [key: string]: string } = {};
 
-        const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: EXPIRY_TIME_IN_SECONDS });
-        return respond({ signedUrl });
+        await Promise.all(
+            fileNames.map(async (fileName: string) => {
+                const key = `${cognitoUserId}/${fileName}`;
+                const getObjectCommand = new GetObjectCommand({
+                    Bucket: getThumbnail ? THUMBNAIL_BUCKET_NAME : UPLOAD_BUCKET_NAME,
+                    Key: key,
+                });
+                const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: EXPIRY_TIME_IN_SECONDS });
+                signedUrls[fileName] = signedUrl;
+            }),
+        );
+
+        return respond({ signedUrls });
     } catch (error) {
         return internalServerErrorResponse(error);
     }

@@ -22,8 +22,8 @@ Resources:
       Description: APIs that need authentication
       StageName: Prod
       DefaultRouteSettings:
-        ThrottlingBurstLimit: 10
-        ThrottlingRateLimit: 10
+        ThrottlingBurstLimit: 50
+        ThrottlingRateLimit: 50
       CorsConfiguration:
         AllowOrigins:
           - "*"
@@ -74,6 +74,7 @@ Resources:
       CodeUri: lambdas/src/
       Handler: signin.lambdaHandler
       Runtime: nodejs20.x
+      Timeout: 30
       Architectures:
         - arm64
       Environment:
@@ -232,11 +233,14 @@ Resources:
             Method: POST
       Environment:
         Variables:
-          BUCKET_NAME: !Ref UploadBucket
+          UPLOAD_BUCKET_NAME: !Ref UploadBucket
+          THUMBNAIL_BUCKET_NAME: !Ref ThumbnailBucket
           EXPIRATION_TIME: 300
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
+        - S3FullAccessPolicy:
+            BucketName: !Ref ThumbnailBucket
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
