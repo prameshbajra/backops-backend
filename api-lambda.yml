@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: API Gateway and Lambda Functions for backop-backend
 
@@ -9,6 +9,8 @@ Parameters:
     Type: String
   UploadBucket:
     Type: String
+  ThumbnailBucket:
+    Type: String
   DynamoDBTable:
     Type: String
 
@@ -18,7 +20,7 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       Description: APIs that need authentication
-      StageName: Prod 
+      StageName: Prod
       DefaultRouteSettings:
         ThrottlingBurstLimit: 10
         ThrottlingRateLimit: 10
@@ -40,7 +42,7 @@ Resources:
           JWTTokenAuthorizer:
             JwtConfiguration:
               issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
-              audience: 
+              audience:
                 - !Ref UserPoolClient
             IdentitySource: "$request.header.Authorization"
 
@@ -48,7 +50,7 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       Description: APIs that do not need authentication
-      StageName: Prod 
+      StageName: Prod
       DefaultRouteSettings:
         ThrottlingBurstLimit: 10
         ThrottlingRateLimit: 10
@@ -82,9 +84,9 @@ Resources:
         UploadEvent:
           Type: HttpApi
           Properties:
-            ApiId: !Ref BackopOpenApi 
+            ApiId: !Ref BackopOpenApi
             Path: /sign-in
-            Method: POST 
+            Method: POST
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -108,13 +110,13 @@ Resources:
         UploadEvent:
           Type: HttpApi
           Properties:
-            ApiId: !Ref BackopApi 
+            ApiId: !Ref BackopApi
             Path: /upload
-            Method: POST 
+            Method: POST
       Environment:
-          Variables:
-            BUCKET_NAME: !Ref UploadBucket
-            EXPIRATION_TIME: 300
+        Variables:
+          BUCKET_NAME: !Ref UploadBucket
+          EXPIRATION_TIME: 300
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
@@ -141,12 +143,12 @@ Resources:
         CompeleteUploadToS3Event:
           Type: HttpApi
           Properties:
-            ApiId: !Ref BackopApi 
+            ApiId: !Ref BackopApi
             Path: /complete
-            Method: POST 
+            Method: POST
       Environment:
-          Variables:
-            BUCKET_NAME: !Ref UploadBucket
+        Variables:
+          BUCKET_NAME: !Ref UploadBucket
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
@@ -173,13 +175,13 @@ Resources:
         UploadEvent:
           Type: HttpApi
           Properties:
-            ApiId: !Ref BackopApi 
+            ApiId: !Ref BackopApi
             Path: /download
-            Method: POST 
+            Method: POST
       Environment:
-          Variables:
-            BUCKET_NAME: !Ref UploadBucket
-            EXPIRATION_TIME: 300
+        Variables:
+          BUCKET_NAME: !Ref UploadBucket
+          EXPIRATION_TIME: 300
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
@@ -206,7 +208,7 @@ Resources:
         UploadEvent:
           Type: HttpApi
           Properties:
-            ApiId: !Ref BackopApi 
+            ApiId: !Ref BackopApi
             Path: /user
             Method: GET
     Metadata:
@@ -232,12 +234,12 @@ Resources:
         UploadEvent:
           Type: HttpApi
           Properties:
-            ApiId: !Ref BackopApi 
+            ApiId: !Ref BackopApi
             Path: /list-objects
             Method: GET
       Environment:
-          Variables:
-            BUCKET_NAME: !Ref UploadBucket
+        Variables:
+          BUCKET_NAME: !Ref UploadBucket
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
@@ -264,12 +266,12 @@ Resources:
         UploadEvent:
           Type: HttpApi
           Properties:
-            ApiId: !Ref BackopApi 
+            ApiId: !Ref BackopApi
             Path: /delete-objects
             Method: DELETE
       Environment:
-          Variables:
-            BUCKET_NAME: !Ref UploadBucket
+        Variables:
+          BUCKET_NAME: !Ref UploadBucket
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
@@ -296,7 +298,7 @@ Resources:
         UploadEvent:
           Type: HttpApi
           Properties:
-            ApiId: !Ref BackopApi 
+            ApiId: !Ref BackopApi
             Path: /sign-out
             Method: GET
     Metadata:
@@ -308,45 +310,68 @@ Resources:
         EntryPoints:
           - signout.ts
 
-  S3UploadProcessorFunction:
-      Type: AWS::Serverless::Function
-      Properties:
-        CodeUri: lambdas/src/
-        Handler: s3UploadProcessor.lambdaHandler
-        Runtime: nodejs20.x
-        MemorySize: 128
-        Timeout: 30
-        Architectures:
-          - arm64
-        Events:
-          S3EventBridgeRule:
-            Type: EventBridgeRule
-            Properties:
-              Pattern:
-                source:
-                  - aws.s3
-                detail:
-                  bucket:
-                    name:
-                      - !Ref UploadBucket
-        Environment:
-            Variables:
-              BUCKET_NAME: !Ref UploadBucket
-              EXPIRATION_TIME: 300
-              DYNAMODB_TABLE: !Ref DynamoDBTable
-        Policies:
-          - S3FullAccessPolicy:
-              BucketName: !Ref UploadBucket
-          - DynamoDBCrudPolicy:
-              TableName: !Ref DynamoDBTable
-      Metadata:
-        BuildMethod: esbuild
-        BuildProperties:
-          Minify: true
-          Target: es2020
-          Sourcemap: true
-          EntryPoints:
-            - s3UploadProcessor.ts
+  GenerateThumbnailFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/
+      Handler: generateThumbnail.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 256
+      Timeout: 120
+      Layers:
+        - !Ref SharpLayer
+      Architectures:
+        - arm64
+      Events:
+        S3EventBridgeRule:
+          Type: EventBridgeRule
+          Properties:
+            Pattern:
+              source:
+                - aws.s3
+              detail:
+                bucket:
+                  name:
+                    - !Ref UploadBucket
+      Environment:
+        Variables:
+          UPLOAD_BUCKET_NAME: !Ref UploadBucket
+          THUMBNAIL_BUCKET_NAME: !Ref ThumbnailBucket
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - S3FullAccessPolicy:
+            BucketName: !Ref UploadBucket
+        - S3FullAccessPolicy:
+            BucketName: !Ref ThumbnailBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: esm
+        Minify: false
+        Target: "es2020"
+        Sourcemap: true
+        OutExtension:
+          - .js=.mjs
+        Banner:
+          - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
+        External:
+          - sharp
+        EntryPoints:
+          - generateThumbnail.ts
+
+  ## Sharp lambda layer
+  SharpLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: sharp
+      ContentUri: lambdas/layers/sharp/release-arm64.zip
+      CompatibleArchitectures:
+        - arm64
+      CompatibleRuntimes:
+        - nodejs18.x
+        - nodejs16.x
 
 Outputs:
   BackopApi:
@@ -366,6 +391,6 @@ Outputs:
   ListObjectsInS3Function:
     Value: !Ref ListObjectsInS3Function
   DeleteObjectsInS3Function:
-    Value: !Ref DeleteObjectsInS3Function  
+    Value: !Ref DeleteObjectsInS3Function
   SignOutFunction:
     Value: !Ref SignOutFunction

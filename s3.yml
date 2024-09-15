@@ -2,6 +2,25 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: S3 Bucket for backop-backend
 
 Resources:
+  ThumbnailBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: "backop-thumbnail-bucket"
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+            - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            ExposedHeaders:
+              - ETag
+            MaxAge: 3000
+
   UploadBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -33,6 +52,9 @@ Resources:
               - StorageClass: INTELLIGENT_TIERING
                 TransitionInDays: 0
 
+
 Outputs:
   UploadBucket:
     Value: !Ref UploadBucket
+  ThumbnailBucket:
+    Value: !Ref ThumbnailBucket

@@ -1,6 +1,7 @@
 import { CognitoIdentityProvider, GetUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { HEADERS } from './headers';
+import { Readable } from 'stream';
 
 const cognitoClient = new CognitoIdentityProvider({ region: process.env.AWS_REGION });
 
@@ -46,4 +47,13 @@ export const validateAccessToken = (event: APIGatewayProxyEvent): string | null 
 export const validateFileNames = (fileNames: unknown): string[] => {
     if (!Array.isArray(fileNames)) return [];
     return fileNames;
+};
+
+export const streamToBuffer = async (stream: Readable): Promise<Buffer> => {
+    const chunks: Uint8Array[] = [];
+    return new Promise((resolve, reject) => {
+        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks)));
+    });
 };
