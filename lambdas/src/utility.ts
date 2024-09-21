@@ -1,4 +1,4 @@
-import { CognitoIdentityProvider, GetUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProvider, GetUserCommandOutput, TooManyRequestsException } from '@aws-sdk/client-cognito-identity-provider';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { HEADERS } from './headers';
 import { Readable } from 'stream';
@@ -29,11 +29,16 @@ export const internalServerErrorResponse = (err: unknown): APIGatewayProxyResult
     body: JSON.stringify({ message: 'Internal server error', error: err }),
 });
 
-export const getUserInfo = async (accessToken: string): Promise<GetUserCommandOutput | null> => {
+export const getUserInfo = async (accessToken: string, retryCount = 5): Promise<GetUserCommandOutput | null> => {
     try {
         const userResponse = await cognitoClient.getUser({ AccessToken: accessToken });
         return userResponse;
     } catch (err) {
+        if (err instanceof TooManyRequestsException && retryCount > 0) {
+            console.warn('TooManyRequestsException: Retrying...', retryCount);
+            await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, 3 - retryCount)));
+            return getUserInfo(accessToken, retryCount - 1);
+        }
         console.error('Failed to get user info:', err);
         return null;
     }

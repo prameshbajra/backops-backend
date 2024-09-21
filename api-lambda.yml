@@ -22,8 +22,8 @@ Resources:
       Description: APIs that need authentication
       StageName: Prod
       DefaultRouteSettings:
-        ThrottlingBurstLimit: 50
-        ThrottlingRateLimit: 50
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 10
       CorsConfiguration:
         AllowOrigins:
           - "*"
@@ -156,7 +156,7 @@ Resources:
       Handler: uploadToS3.lambdaHandler
       Runtime: nodejs20.x
       MemorySize: 128
-      Timeout: 30
+      Timeout: 35
       Architectures:
         - arm64
       Events:
@@ -166,6 +166,9 @@ Resources:
             ApiId: !Ref BackopApi
             Path: /upload
             Method: POST
+            RouteSettings:  
+              ThrottlingBurstLimit: 400 
+              ThrottlingRateLimit: 400   
       Environment:
         Variables:
           BUCKET_NAME: !Ref UploadBucket
@@ -189,7 +192,7 @@ Resources:
       Handler: completeUploadToS3.lambdaHandler
       Runtime: nodejs20.x
       MemorySize: 128
-      Timeout: 30
+      Timeout: 35
       Architectures:
         - arm64
       Events:
@@ -199,6 +202,9 @@ Resources:
             ApiId: !Ref BackopApi
             Path: /complete
             Method: POST
+            RouteSettings:  
+              ThrottlingBurstLimit: 400 
+              ThrottlingRateLimit: 400  
       Environment:
         Variables:
           BUCKET_NAME: !Ref UploadBucket
