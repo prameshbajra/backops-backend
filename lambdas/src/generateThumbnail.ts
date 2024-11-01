@@ -1,18 +1,14 @@
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { marshall } from '@aws-sdk/util-dynamodb';
 import { Context, EventBridgeEvent, EventBridgeHandler } from 'aws-lambda';
 import sharp from 'sharp';
 import { Readable } from 'stream';
 import { streamToBuffer } from './utility';
 
-const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE as string;
 const UPLOAD_BUCKET_NAME = process.env.UPLOAD_BUCKET_NAME as string;
 const THUMBNAIL_BUCKET_NAME = process.env.THUMBNAIL_BUCKET_NAME as string;
 const THUMBNAIL_WIDTH = 200;
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION, useAccelerateEndpoint: true });
-const dynamoDbClient = new DynamoDBClient({});
 
 interface S3ObjectDetail {
     key: string;
@@ -44,30 +40,6 @@ const generateThumbnail = async (key: string): Promise<Buffer> => {
     return thumbnailBuffer;
 };
 
-const saveDataToDynamoDb = async (userId: string, fileName: string, size: number) => {
-    const currentDate = new Date().toISOString();
-    const item = {
-        PK: userId,
-        SK: currentDate,
-        fileName: fileName,
-        fileSize: size,
-    };
-    console.log('Item to be inserted into DynamoDB:', item);
-
-    const params = {
-        TableName: DYNAMODB_TABLE,
-        Item: marshall(item),
-    };
-
-    try {
-        const command = new PutItemCommand(params);
-        await dynamoDbClient.send(command);
-        console.log('Data successfully inserted into DynamoDB');
-    } catch (error) {
-        console.error('Error inserting data into DynamoDB:', error);
-    }
-};
-
 export const lambdaHandler: EventBridgeHandler<'ObjectCreated', { object: S3ObjectDetail }, void> = async (
     event: EventBridgeEvent<'ObjectCreated', { object: S3ObjectDetail }>,
     _context: Context,
@@ -80,7 +52,6 @@ export const lambdaHandler: EventBridgeHandler<'ObjectCreated', { object: S3Obje
         const thumbnailBuffer = await generateThumbnail(key);
         const thumbnailKey = await uploadThumbnail(userId, fileName, thumbnailBuffer);
         console.log('Thumbnail generated and uploaded: ', thumbnailKey);
-        await saveDataToDynamoDb(userId, fileName, size);
     } catch (error) {
         console.error('Error generating or saving thumbnail:', error);
     }

@@ -208,9 +208,12 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref UploadBucket
+          DYNAMODB_TABLE: !Ref DynamoDBTable
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -315,14 +318,11 @@ Resources:
         Variables:
           UPLOAD_BUCKET_NAME: !Ref UploadBucket
           THUMBNAIL_BUCKET_NAME: !Ref ThumbnailBucket
-          DYNAMODB_TABLE: !Ref DynamoDBTable
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
         - S3FullAccessPolicy:
             BucketName: !Ref ThumbnailBucket
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DynamoDBTable
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
