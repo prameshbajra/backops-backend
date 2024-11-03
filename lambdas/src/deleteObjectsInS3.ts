@@ -1,4 +1,6 @@
+import { DeleteItemCommand, BatchWriteItemCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DeleteObjectsCommand, S3Client } from '@aws-sdk/client-s3';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import {
     getUserInfo,
@@ -6,11 +8,45 @@ import {
     respond,
     unauthorizedResponse,
     validateAccessToken,
-    validateFileNames,
 } from './utility';
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION, useAccelerateEndpoint: true });
-const BUCKET_NAME = process.env.BUCKET_NAME as string;
+const dynamoDBClient = new DynamoDBClient({ region: process.env.AWS_REGION });
+const UPLOAD_BUCKET_NAME = process.env.UPLOAD_BUCKET_NAME as string;
+const THUMBNAIL_BUCKET_NAME = process.env.THUMBNAIL_BUCKET_NAME as string;
+const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE as string;
+
+interface FileItem {
+    PK: string;
+    SK: string;
+    fileName: string;
+}
+
+// Helper function to delete files from an S3 bucket
+const deleteFilesFromBucket = async (bucketName: string, keys: { Key: string }[]) => {
+    const command = new DeleteObjectsCommand({
+        Bucket: bucketName,
+        Delete: { Objects: keys, Quiet: false },
+    });
+    return s3Client.send(command);
+};
+
+// Helper function to delete records from DynamoDB in batch
+const deleteRecordsFromDynamoDB = async (files: FileItem[]) => {
+    const deleteRequests = files.map((file) => ({
+        DeleteRequest: {
+            Key: marshall({ PK: file.PK, SK: file.SK }),
+        },
+    }));
+
+    const batchCommand = new BatchWriteItemCommand({
+        RequestItems: {
+            [DYNAMODB_TABLE]: deleteRequests,
+        },
+    });
+
+    return dynamoDBClient.send(batchCommand);
+};
 
 export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => {
     const accessToken = validateAccessToken(event);
@@ -26,22 +62,28 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
     }
 
     const body = JSON.parse(event.body || '{}');
-    const { fileNames } = body;
-    const validatedFileNames = validateFileNames(fileNames);
+    const { files } = body;
+    const fileKeys = files.map((file: FileItem) => ({ Key: `${cognitoUserId}/${file.fileName}` }));
 
-    console.log('Files to be deleted: ', validatedFileNames);
     try {
-        const deleteCommand = new DeleteObjectsCommand({
-            Bucket: BUCKET_NAME,
-            Delete: {
-                Objects: validatedFileNames.map((name: string) => ({ Key: `${cognitoUserId}/${name}` })),
-                Quiet: false,
-            },
+        // Perform S3 deletions in parallel
+        const [uploadBucketDeleteResponse, thumbnailBucketDeleteResponse] = await Promise.all([
+            deleteFilesFromBucket(UPLOAD_BUCKET_NAME, fileKeys),
+            deleteFilesFromBucket(THUMBNAIL_BUCKET_NAME, fileKeys),
+        ]);
+
+        // Perform DynamoDB deletions
+        await deleteRecordsFromDynamoDB(files);
+
+        console.log('Deleted items successfully: ', `User - ${cognitoUserId}`);
+
+        return respond({
+            message: 'Files and records deleted successfully',
+            uploadFilesDeleted: uploadBucketDeleteResponse.Deleted,
+            thumbnailFilesDeleted: thumbnailBucketDeleteResponse.Deleted,
         });
-        const deleteResponse = await s3Client.send(deleteCommand);
-        return respond(deleteResponse.Deleted);
     } catch (error) {
-        console.error('Error listing S3 objects:', error);
-        return internalServerErrorResponse('Failed to list S3 objects');
+        console.error('Error deleting objects or records:', error);
+        return internalServerErrorResponse('Failed to delete objects or records');
     }
 };

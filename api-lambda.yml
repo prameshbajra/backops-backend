@@ -278,10 +278,16 @@ Resources:
             Method: DELETE
       Environment:
         Variables:
-          BUCKET_NAME: !Ref UploadBucket
+          UPLOAD_BUCKET_NAME: !Ref UploadBucket
+          THUMBNAIL_BUCKET_NAME: !Ref ThumbnailBucket
+          DYNAMODB_TABLE: !Ref DynamoDBTable
       Policies:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
+        - S3FullAccessPolicy:
+            BucketName: !Ref ThumbnailBucket 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

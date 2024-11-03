@@ -1,7 +1,11 @@
-import { CognitoIdentityProvider, GetUserCommandOutput, TooManyRequestsException } from '@aws-sdk/client-cognito-identity-provider';
+import {
+    CognitoIdentityProvider,
+    GetUserCommandOutput,
+    TooManyRequestsException,
+} from '@aws-sdk/client-cognito-identity-provider';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { HEADERS } from './headers';
 import { Readable } from 'stream';
+import { HEADERS } from './headers';
 
 const cognitoClient = new CognitoIdentityProvider({ region: process.env.AWS_REGION });
 
@@ -47,11 +51,6 @@ export const getUserInfo = async (accessToken: string, retryCount = 5): Promise<
 export const validateAccessToken = (event: APIGatewayProxyEvent): string | null => {
     const accessToken = event.headers.authorization;
     return accessToken || null;
-};
-
-export const validateFileNames = (fileNames: unknown): string[] => {
-    if (!Array.isArray(fileNames)) return [];
-    return fileNames;
 };
 
 export const streamToBuffer = async (stream: Readable): Promise<Buffer> => {
