@@ -36,6 +36,7 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
                 ':cognitoUserId': { S: cognitoUserId },
                 ':skPrefix': { S: date },
             },
+            ScanIndexForward: false,
         };
 
         const data = await dynamoDbClient.send(new QueryCommand(params));
