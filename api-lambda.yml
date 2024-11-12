@@ -316,6 +316,8 @@ Resources:
             Pattern:
               source:
                 - aws.s3
+              detail-type:
+                - Object Created
               detail:
                 bucket:
                   name:

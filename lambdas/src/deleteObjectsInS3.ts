@@ -83,7 +83,6 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
             thumbnailFilesDeleted: thumbnailBucketDeleteResponse.Deleted,
         });
     } catch (error) {
-        console.error('Error deleting objects or records:', error);
         return internalServerErrorResponse('Failed to delete objects or records');
     }
 };
