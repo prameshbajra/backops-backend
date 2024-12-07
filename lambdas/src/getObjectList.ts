@@ -1,4 +1,5 @@
-import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, QueryCommand, QueryCommandInput } from '@aws-sdk/client-dynamodb';
+import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import {
     getUserInfo,
@@ -7,10 +8,10 @@ import {
     unauthorizedResponse,
     validateAccessToken,
 } from './utility';
-import { unmarshall } from '@aws-sdk/util-dynamodb';
 
 const dynamoDbClient = new DynamoDBClient({});
 const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE as string;
+const PAGE_SIZE = 100;
 
 export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => {
     const accessToken = validateAccessToken(event);
@@ -26,22 +27,34 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
     }
 
     const body = JSON.parse(event.body || '{}');
-    const { date } = body;
+    const { nextToken } = body; // Accept `nextToken` for pagination
 
     try {
-        const params = {
+        const params: QueryCommandInput = {
             TableName: DYNAMODB_TABLE,
-            KeyConditionExpression: 'PK = :cognitoUserId AND begins_with(SK, :skPrefix)',
+            KeyConditionExpression: 'PK = :cognitoUserId',
             ExpressionAttributeValues: {
                 ':cognitoUserId': { S: cognitoUserId },
-                ':skPrefix': { S: date },
             },
-            ScanIndexForward: false,
+            ScanIndexForward: false, // For descending order
+            Limit: PAGE_SIZE,
         };
+
+        if (nextToken) {
+            params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
+        }
 
         const data = await dynamoDbClient.send(new QueryCommand(params));
         const items = data.Items ? data.Items.map((item) => unmarshall(item)) : [];
-        return respond({ items });
+
+        const nextTokenResponse = data.LastEvaluatedKey
+            ? Buffer.from(JSON.stringify(data.LastEvaluatedKey)).toString('base64')
+            : null;
+
+        return respond({
+            items,
+            nextToken: nextTokenResponse,
+        });
     } catch (error) {
         console.error('Error querying DynamoDB:', error);
         return internalServerErrorResponse('Failed to query items from DynamoDB');
