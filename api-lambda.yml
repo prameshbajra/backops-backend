@@ -307,6 +307,7 @@ Resources:
       Timeout: 120
       Layers:
         - !Ref SharpLayer
+        - arn:aws:lambda:ap-south-1:967661707579:layer:ffmpeg:3
       Architectures:
         - arm64
       Events:
@@ -327,7 +328,7 @@ Resources:
           UPLOAD_BUCKET_NAME: !Ref UploadBucket
           THUMBNAIL_BUCKET_NAME: !Ref ThumbnailBucket
       Policies:
-        - S3FullAccessPolicy:
+        - S3FullAccessPolicy: 
             BucketName: !Ref UploadBucket
         - S3FullAccessPolicy:
             BucketName: !Ref ThumbnailBucket
@@ -389,8 +390,7 @@ Resources:
       CompatibleArchitectures:
         - arm64
       CompatibleRuntimes:
-        - nodejs18.x
-        - nodejs16.x
+        - nodejs20.x
 
 Outputs:
   BackopApi:
