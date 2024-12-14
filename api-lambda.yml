@@ -13,6 +13,10 @@ Parameters:
     Type: String
   DynamoDBTable:
     Type: String
+  FFmpegLambdaVersion:
+    Type: String
+    Default: 1.0.0
+    Description: The semantic version of the ffmpeg layer you wish to deploy.
 
 Resources:
   # APIs
@@ -307,7 +311,7 @@ Resources:
       Timeout: 120
       Layers:
         - !Ref SharpLayer
-        - arn:aws:lambda:ap-south-1:967661707579:layer:ffmpeg:3
+        - !GetAtt FFmpegLambdaLayer.Outputs.LayerVersion
       Architectures:
         - arm64
       Events:
@@ -392,6 +396,13 @@ Resources:
       CompatibleRuntimes:
         - nodejs20.x
 
+  FFmpegLambdaLayer:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:145266761615:applications/ffmpeg-lambda-layer
+        SemanticVersion: !Ref FFmpegLambdaVersion
+
 Outputs:
   BackopApi:
     Value: !Ref BackopApi
@@ -411,3 +422,5 @@ Outputs:
     Value: !Ref DeleteObjectsInS3Function
   SignOutFunction:
     Value: !Ref SignOutFunction
+  FFmpegLambdaLayer:
+    Value: !GetAtt FFmpegLambdaLayer.Outputs.LayerVersion

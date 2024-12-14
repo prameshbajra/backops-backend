@@ -81,6 +81,28 @@ const listFilesRecursively = (directoryPath: string): void => {
     });
 };
 
+const one = async () => {
+    try {
+        console.log('Calling ffmpeg from /opt/bin');
+        const { stdout, stderr } = await execPromise('/opt/bin/ffmpeg');
+        if (stdout) console.log(`stdout: ${stdout}`);
+        if (stderr) console.error(`stderr: ${stderr}`);
+    } catch (error) {
+        console.error(`Error: ${error}`);
+    }
+};
+
+const two = async () => {
+    try {
+        console.log('Calling ffmpeg directly');
+        const { stdout, stderr } = await execPromise('ffmpeg');
+        if (stdout) console.log(`stdout: ${stdout}`);
+        if (stderr) console.error(`stderr: ${stderr}`);
+    } catch (error) {
+        console.error(`Error: ${error}`);
+    }
+};
+
 export const lambdaHandler: EventBridgeHandler<'ObjectCreated', { object: S3ObjectDetail }, void> = async (
     event: EventBridgeEvent<'ObjectCreated', { object: S3ObjectDetail }>,
     _context: Context,
@@ -93,12 +115,10 @@ export const lambdaHandler: EventBridgeHandler<'ObjectCreated', { object: S3Obje
 
     console.log('Calling ffmpeg');
     try {
-        const { stdout, stderr } = await execPromise('/opt/bin/ffmpeg');
-        if (stdout) console.log(`stdout: ${stdout}`);
-        if (stderr) console.error(`stderr: ${stderr}`);
+        one();
+        two();
     } catch (error) {
         console.error(`Error: ${error}`);
     }
-
     console.log('ffmpeg execution complete');
 };
