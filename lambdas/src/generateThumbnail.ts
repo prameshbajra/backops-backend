@@ -63,35 +63,6 @@ const generateThumbnail = async (key: string): Promise<Buffer> => {
 
 const execPromise = promisify(exec);
 
-const listFilesRecursively = (directoryPath: string): void => {
-    console.log(`Listing files in directory: ${directoryPath}`);
-    const entries = fs.readdirSync(directoryPath);
-
-    entries.forEach((entry) => {
-        const fullPath = path.join(directoryPath, entry);
-        const stats = fs.statSync(fullPath);
-
-        if (stats.isDirectory()) {
-            console.log(`- ${entry} (Directory)`);
-            // Recursively list files in subdirectory
-            listFilesRecursively(fullPath);
-        } else {
-            console.log(`- ${entry} (File)`);
-        }
-    });
-};
-
-const one = async () => {
-    try {
-        console.log('Calling ffmpeg from /opt/bin');
-        const { stdout, stderr } = await execPromise('/opt/bin/ffmpeg');
-        if (stdout) console.log(`stdout: ${stdout}`);
-        if (stderr) console.error(`stderr: ${stderr}`);
-    } catch (error) {
-        console.error(`Error: ${error}`);
-    }
-};
-
 const two = async () => {
     try {
         console.log('Calling ffmpeg directly');
@@ -108,14 +79,8 @@ export const lambdaHandler: EventBridgeHandler<'ObjectCreated', { object: S3Obje
     _context: Context,
 ) => {
     console.log('Event: ', event);
-
-    // List files in /opt
-    const directoryPath = '/opt';
-    listFilesRecursively(directoryPath);
-
     console.log('Calling ffmpeg');
     try {
-        one();
         two();
     } catch (error) {
         console.error(`Error: ${error}`);
