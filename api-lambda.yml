@@ -313,7 +313,7 @@ Resources:
         - !Ref SharpLayer
         - !GetAtt FFmpegLambdaLayer.Outputs.LayerVersion
       Architectures:
-        - arm64
+        - x86_64
       Events:
         S3EventBridgeRule:
           Type: EventBridgeRule
@@ -390,9 +390,9 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName: sharp
-      ContentUri: lambdas/layers/sharp/release-arm64.zip
+      ContentUri: lambdas/layers/sharp/release-x64.zip
       CompatibleArchitectures:
-        - arm64
+        - x86_64
       CompatibleRuntimes:
         - nodejs20.x
 

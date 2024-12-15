@@ -4,15 +4,17 @@ import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
-import { Readable } from 'stream';
+import { Readable, pipeline } from 'stream';
 import { promisify } from 'util';
-import { streamToBuffer } from './utility';
 
 const UPLOAD_BUCKET_NAME = process.env.UPLOAD_BUCKET_NAME as string;
 const THUMBNAIL_BUCKET_NAME = process.env.THUMBNAIL_BUCKET_NAME as string;
 const THUMBNAIL_WIDTH = 200;
+const TMP_FOLDER = '/tmp';
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION, useAccelerateEndpoint: true });
+const pipelineAsync = promisify(pipeline);
+const execPromise = promisify(exec);
 
 interface S3ObjectDetail {
     key: string;
@@ -32,58 +34,77 @@ const uploadThumbnail = async (userId: string, fileName: string, thumbnailBuffer
     return thumbnailKey;
 };
 
-const generateThumbnail = async (key: string): Promise<Buffer> => {
+const downloadFileFromS3 = async (key: string, fileName: string): Promise<string> => {
+    const s3Client = new S3Client({});
     const s3ObjectParams = {
         Bucket: UPLOAD_BUCKET_NAME,
         Key: key,
     };
+
     console.log('Getting object from S3: ', s3ObjectParams);
+    const inputFilePath = path.join(TMP_FOLDER, fileName);
     const s3Object = await s3Client.send(new GetObjectCommand(s3ObjectParams));
-    const imageBuffer = await streamToBuffer(s3Object.Body as Readable);
-    const thumbnailBuffer = await sharp(imageBuffer).resize(THUMBNAIL_WIDTH).jpeg().toBuffer();
-    return thumbnailBuffer;
+    const inputStream = s3Object.Body as Readable;
+
+    await pipelineAsync(inputStream, fs.createWriteStream(inputFilePath));
+    console.log(`File downloaded to ${inputFilePath}`);
+    return inputFilePath;
 };
 
-// export const lambdaHandler: EventBridgeHandler<'ObjectCreated', { object: S3ObjectDetail }, void> = async (
-//     event: EventBridgeEvent<'ObjectCreated', { object: S3ObjectDetail }>,
-//     _context: Context,
-// ) => {
-//     const fileDetails = event.detail.object;
-//     const { key, size } = fileDetails;
-//     const [userId, fileName] = key.split('/');
-//     console.log('Key: ', key, 'Size: ', size, 'UserId: ', userId, 'FileName: ', fileName);
-//     try {
-//         const thumbnailBuffer = await generateThumbnail(key);
-//         const thumbnailKey = await uploadThumbnail(userId, fileName, thumbnailBuffer);
-//         console.log('Thumbnail generated and uploaded: ', thumbnailKey);
-//     } catch (error) {
-//         console.error('Error generating or saving thumbnail:', error);
-//     }
-// };
+const generateThumbnail = async (userId: string, fileName: string, inputFilePath: string): Promise<void> => {
+    const isImage =
+        fileName.toLowerCase().endsWith('.jpg') ||
+        fileName.toLowerCase().endsWith('.jpeg') ||
+        fileName.toLowerCase().endsWith('.png');
 
-const execPromise = promisify(exec);
+    if (isImage) {
+        console.log('Thumbnail generated for image');
+        const fileNameWithoutExtension = fileName.split('.').slice(0, -1).join('.');
+        const thumbnailFileName = `${fileNameWithoutExtension}.jpg`;
+        const thumbnailBuffer = await sharp(inputFilePath).resize(THUMBNAIL_WIDTH).toBuffer();
+        await uploadThumbnail(userId, thumbnailFileName, thumbnailBuffer);
+        console.log('Thumbnail uploaded to S3:', thumbnailFileName);
+    } else if (
+        fileName.toLowerCase().endsWith('.mp4') ||
+        fileName.toLowerCase().endsWith('.mov') ||
+        fileName.toLowerCase().endsWith('.avi') ||
+        fileName.toLowerCase().endsWith('.mkv')
+    ) {
+        const fileNameWithoutExtension = fileName.split('.').slice(0, -1).join('.');
+        const thumbnailFileName = `${fileNameWithoutExtension}.jpg`;
+        const thumbnailFilePath = path.join(TMP_FOLDER, thumbnailFileName);
 
-const two = async () => {
-    try {
-        console.log('Calling ffmpeg directly');
-        const { stdout, stderr } = await execPromise('ffmpeg');
-        if (stdout) console.log(`stdout: ${stdout}`);
-        if (stderr) console.error(`stderr: ${stderr}`);
-    } catch (error) {
-        console.error(`Error: ${error}`);
+        await generateThumbnailForVideo(inputFilePath, thumbnailFilePath);
+
+        const thumbnailBuffer = fs.readFileSync(thumbnailFilePath);
+        await uploadThumbnail(userId, thumbnailFileName, thumbnailBuffer);
+
+        fs.unlinkSync(thumbnailFilePath);
+    } else {
+        console.log('Unsupported file format for thumbnail generation: ', fileName);
     }
+};
+
+const generateThumbnailForVideo = async (inputFilePath: string, thumbnailFilePath: string): Promise<void> => {
+    console.log('Generating video thumbnail using ffmpeg...');
+    const command = `ffmpeg -i ${inputFilePath} -ss 00:00:01 -frames:v 1 -vf scale=${THUMBNAIL_WIDTH}:-1 ${thumbnailFilePath}`;
+    console.log(`Executing command: ${command}`);
+    await execPromise(command);
+    console.log(`Video thumbnail generated at ${thumbnailFilePath}`);
 };
 
 export const lambdaHandler: EventBridgeHandler<'ObjectCreated', { object: S3ObjectDetail }, void> = async (
     event: EventBridgeEvent<'ObjectCreated', { object: S3ObjectDetail }>,
     _context: Context,
 ) => {
-    console.log('Event: ', event);
-    console.log('Calling ffmpeg');
+    const fileDetails = event.detail.object;
+    const { key, size } = fileDetails;
+    const [userId, fileName] = key.split('/');
+    console.log('Key: ', key, 'Size: ', size, 'UserId: ', userId, 'FileName: ', fileName);
     try {
-        two();
+        const inputFilePath = await downloadFileFromS3(key, fileName);
+        await generateThumbnail(userId, fileName, inputFilePath);
     } catch (error) {
-        console.error(`Error: ${error}`);
+        console.error('Error generating or saving thumbnail:', error);
     }
-    console.log('ffmpeg execution complete');
 };

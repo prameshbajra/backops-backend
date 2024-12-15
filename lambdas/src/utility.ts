@@ -52,12 +52,3 @@ export const validateAccessToken = (event: APIGatewayProxyEvent): string | null 
     const accessToken = event.headers.authorization;
     return accessToken || null;
 };
-
-export const streamToBuffer = async (stream: Readable): Promise<Buffer> => {
-    const chunks: Uint8Array[] = [];
-    return new Promise((resolve, reject) => {
-        stream.on('data', (chunk) => chunks.push(chunk));
-        stream.on('error', reject);
-        stream.on('end', () => resolve(Buffer.concat(chunks)));
-    });
-};
