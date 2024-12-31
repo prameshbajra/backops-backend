@@ -27,7 +27,7 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
     }
 
     const body = JSON.parse(event.body || '{}');
-    const { nextToken } = body; // Accept `nextToken` for pagination
+    const { nextToken, timestampPrefix } = body;
 
     try {
         const params: QueryCommandInput = {
@@ -39,6 +39,13 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
             ScanIndexForward: false, // For descending order
             Limit: PAGE_SIZE,
         };
+
+        if (timestampPrefix) {
+            params.KeyConditionExpression += ' AND begins_with(SK, :timestampPrefix)';
+            if (params.ExpressionAttributeValues) {
+                params.ExpressionAttributeValues[':timestampPrefix'] = { S: timestampPrefix };
+            }
+        }
 
         if (nextToken) {
             params.ExclusiveStartKey = JSON.parse(Buffer.from(nextToken, 'base64').toString('utf-8'));
