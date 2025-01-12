@@ -9,8 +9,8 @@ import { HEADERS } from './headers';
 
 const cognitoClient = new CognitoIdentityProvider({ region: process.env.AWS_REGION });
 
-export const respond = (body: unknown): APIGatewayProxyResult => ({
-    statusCode: 200,
+export const respond = (body: unknown, statusCode = 200): APIGatewayProxyResult => ({
+    statusCode: statusCode,
     headers: HEADERS,
     body: JSON.stringify(body),
 });
