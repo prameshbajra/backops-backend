@@ -1,0 +1,48 @@
+{
+  "$metadata": {
+    "httpStatusCode": 200,
+    "requestId": "b9e29d11-2f38-4bfe-aed6-b3653c3f30f2",
+    "attempts": 1,
+    "totalRetryDelay": 0
+  },
+  "FaceMatches": [
+    {
+      "Face": {
+        "BoundingBox": {
+          "Height": 0.2443300038576126,
+          "Left": 0.431331992149353,
+          "Top": 0.2670550048351288,
+          "Width": 0.2925049960613251
+        },
+        "Confidence": 99.9979019165039,
+        "FaceId": "521f37cb-a5b3-4fa9-9cf4-2686fca21e31",
+        "ImageId": "6ed44618-f837-341a-9e2e-2c97b923c0c0",
+        "IndexFacesModelVersion": "7.0"
+      },
+      "Similarity": 99.84899139404297
+    },
+    {
+      "Face": {
+        "BoundingBox": {
+          "Height": 0.571806013584137,
+          "Left": 0.27450600266456604,
+          "Top": 0.20800800621509552,
+          "Width": 0.44188299775123596
+        },
+        "Confidence": 99.9999008178711,
+        "FaceId": "011cab09-6d02-46d1-994a-13ea53b59f97",
+        "ImageId": "2e106062-7eb8-3c1c-9ca4-654e8340ec93",
+        "IndexFacesModelVersion": "7.0"
+      },
+      "Similarity": 99.81044006347656
+    }
+  ],
+  "FaceModelVersion": "7.0",
+  "SearchedFaceBoundingBox": {
+    "Height": 0.29788607358932495,
+    "Left": 0.4184039831161499,
+    "Top": 0.10475033521652222,
+    "Width": 0.2864498794078827
+  },
+  "SearchedFaceConfidence": 99.99979400634766
+}
