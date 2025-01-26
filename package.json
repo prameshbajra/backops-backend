@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.645.0",
+    "@aws-sdk/client-rekognition": "^3.734.0",
     "@aws-sdk/util-dynamodb": "^3.645.0",
     "axios": "^1.7.3",
     "jsonwebtoken": "^9.0.2"
