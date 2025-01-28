@@ -41,10 +41,10 @@ async function indexFaces() {
         Image: {
             S3Object: {
                 Bucket: BUCKET_NAME,
-                Name: '01b37d5a-3061-70c5-909f-a302900e9e89/IMG_0472.JPG',
+                Name: '01b37d5a-3061-70c5-909f-a302900e9e89/andy-hu-B85A8-GHjoI-unsplash.jpg',
             },
         },
-        DetectionAttributes: [Attribute.ALL],
+        DetectionAttributes: [Attribute.DEFAULT],
         MaxFaces: 10,
     });
     const indexFacesResponse = await client.send(indexFacesCommand);
@@ -81,6 +81,6 @@ async function searchFacesByImage() {
     console.log(`Response has been written to ${filePath}`);
 }
 
-// indexFaces();
+indexFaces();
 // describeCollection();
-searchFacesByImage();
+// searchFacesByImage();
