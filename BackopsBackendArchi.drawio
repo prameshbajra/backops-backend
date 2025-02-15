@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" version="25.0.3">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" version="26.0.13">
   <diagram name="Page-1" id="5c-N3aM7RLb5X0E32vks">
-    <mxGraphModel dx="2206" dy="2401" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1674" dy="1970" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -49,6 +49,14 @@
         </mxCell>
         <mxCell id="tYbbxvIeICveUMQb8AR5-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="tYbbxvIeICveUMQb8AR5-23" target="tYbbxvIeICveUMQb8AR5-27" edge="1">
           <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dXzo28lPY83yRuNepPKe-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="tYbbxvIeICveUMQb8AR5-23" target="dXzo28lPY83yRuNepPKe-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dXzo28lPY83yRuNepPKe-9" value="OnInsert" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="dXzo28lPY83yRuNepPKe-8">
+          <mxGeometry x="-0.0966" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="tYbbxvIeICveUMQb8AR5-23" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;DynamoDB&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.dynamo_db;fillColor=#2E73B8;gradientColor=none;" parent="1" vertex="1">
           <mxGeometry x="767" y="820" width="72" height="81" as="geometry" />
@@ -104,10 +112,15 @@
           <mxGeometry x="400" y="700" width="48" height="48" as="geometry" />
         </mxCell>
         <mxCell id="sQ9Gj2LAa3YzsV_l0nJq-28" value="" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;edgeStyle=orthogonalEdgeStyle;endArrow=oval;endFill=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" source="sQ9Gj2LAa3YzsV_l0nJq-27" target="tYbbxvIeICveUMQb8AR5-23" edge="1">
-          <mxGeometry relative="1" as="geometry" />
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="805" y="950" />
+              <mxPoint x="805" y="950" />
+            </Array>
+          </mxGeometry>
         </mxCell>
         <mxCell id="sQ9Gj2LAa3YzsV_l0nJq-27" value="Table structure" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
-          <mxGeometry x="910" y="870" width="130" height="200.25" as="geometry" />
+          <mxGeometry x="740" y="1000" width="130" height="200.25" as="geometry" />
         </mxCell>
         <mxCell id="sQ9Gj2LAa3YzsV_l0nJq-29" value="PK: userId&lt;div&gt;SK: Timestamp&lt;/div&gt;&lt;div&gt;fileName: string&lt;/div&gt;&lt;div&gt;fileSize: string&lt;/div&gt;&lt;div&gt;metadata: string&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="sQ9Gj2LAa3YzsV_l0nJq-27" vertex="1">
           <mxGeometry x="10" y="20" width="110" height="90" as="geometry" />
@@ -122,6 +135,9 @@
         </mxCell>
         <mxCell id="sQ9Gj2LAa3YzsV_l0nJq-32" value="- Completes multipart upload obviously&lt;div&gt;- Saves PK, SK, fileName and fileSize&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="sQ9Gj2LAa3YzsV_l0nJq-30" vertex="1">
           <mxGeometry x="10" y="35" width="230" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="dXzo28lPY83yRuNepPKe-4" value="&lt;div&gt;CreateCollection + IndexFaces&lt;/div&gt;&lt;div&gt;Rekognition API&lt;/div&gt;" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.lambda_function;" vertex="1" parent="1">
+          <mxGeometry x="1160" y="836.5" width="48" height="48" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
