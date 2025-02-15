@@ -1,7 +1,7 @@
 {
   "$metadata": {
     "httpStatusCode": 200,
-    "requestId": "b9e29d11-2f38-4bfe-aed6-b3653c3f30f2",
+    "requestId": "5537b1e8-8ae9-41b0-aba1-90ca279e1d23",
     "attempts": 1,
     "totalRetryDelay": 0
   },
@@ -9,40 +9,40 @@
     {
       "Face": {
         "BoundingBox": {
-          "Height": 0.2443300038576126,
-          "Left": 0.431331992149353,
-          "Top": 0.2670550048351288,
-          "Width": 0.2925049960613251
+          "Height": 0.19199100136756897,
+          "Left": 0.2386379987001419,
+          "Top": 0.41732099652290344,
+          "Width": 0.13463899493217468
         },
-        "Confidence": 99.9979019165039,
-        "FaceId": "521f37cb-a5b3-4fa9-9cf4-2686fca21e31",
-        "ImageId": "6ed44618-f837-341a-9e2e-2c97b923c0c0",
+        "Confidence": 99.99909973144531,
+        "FaceId": "43a4ba65-defc-452a-a1cd-a0bae8d3e32e",
+        "ImageId": "d1014151-3a65-3a12-92db-3ad93d9337ab",
         "IndexFacesModelVersion": "7.0"
       },
-      "Similarity": 99.84899139404297
+      "Similarity": 99.93535614013672
     },
     {
       "Face": {
         "BoundingBox": {
-          "Height": 0.571806013584137,
-          "Left": 0.27450600266456604,
-          "Top": 0.20800800621509552,
-          "Width": 0.44188299775123596
+          "Height": 0.4406670033931732,
+          "Left": 0.5939649939537048,
+          "Top": 0.1657409965991974,
+          "Width": 0.2747359871864319
         },
-        "Confidence": 99.9999008178711,
-        "FaceId": "011cab09-6d02-46d1-994a-13ea53b59f97",
-        "ImageId": "2e106062-7eb8-3c1c-9ca4-654e8340ec93",
+        "Confidence": 100,
+        "FaceId": "73def119-4656-4865-911d-31d491e0f6ef",
+        "ImageId": "7aebff2a-b6a9-31b6-8af2-8a75c135d104",
         "IndexFacesModelVersion": "7.0"
       },
-      "Similarity": 99.81044006347656
+      "Similarity": 99.8542709350586
     }
   ],
   "FaceModelVersion": "7.0",
   "SearchedFaceBoundingBox": {
-    "Height": 0.29788607358932495,
-    "Left": 0.4184039831161499,
-    "Top": 0.10475033521652222,
-    "Width": 0.2864498794078827
+    "Height": 0.6531897187232971,
+    "Left": 0.08134263008832932,
+    "Top": 0.027245711535215378,
+    "Width": 0.42674264311790466
   },
-  "SearchedFaceConfidence": 99.99979400634766
+  "SearchedFaceConfidence": 99.99877166748047
 }

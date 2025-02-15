@@ -41,7 +41,7 @@ async function indexFaces() {
         Image: {
             S3Object: {
                 Bucket: BUCKET_NAME,
-                Name: '01b37d5a-3061-70c5-909f-a302900e9e89/andy-hu-B85A8-GHjoI-unsplash.jpg',
+                Name: '01b37d5a-3061-70c5-909f-a302900e9e89/IMG_1879.JPG',
             },
         },
         DetectionAttributes: [Attribute.DEFAULT],
@@ -69,7 +69,7 @@ async function searchFacesByImage() {
         Image: {
             S3Object: {
                 Bucket: BUCKET_NAME,
-                Name: '01b37d5a-3061-70c5-909f-a302900e9e89/IMG_9655.jpeg',
+                Name: '01b37d5a-3061-70c5-909f-a302900e9e89/IMG_1880.JPG',
             },
         },
         MaxFaces: 5,
@@ -81,6 +81,6 @@ async function searchFacesByImage() {
     console.log(`Response has been written to ${filePath}`);
 }
 
-indexFaces();
-// describeCollection();
+// indexFaces();
+describeCollection();
 // searchFacesByImage();

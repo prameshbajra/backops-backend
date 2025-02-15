@@ -31,3 +31,5 @@ Resources:
         UploadBucket: !GetAtt S3Stack.Outputs.UploadBucket
         ThumbnailBucket: !GetAtt S3Stack.Outputs.ThumbnailBucket
         DynamoDBTable: !GetAtt DatabaseStack.Outputs.DynamoDBTable
+        DynamoDBTableStreamArn: !GetAtt DatabaseStack.Outputs.DynamoDBTableStreamArn
+      

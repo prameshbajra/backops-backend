@@ -13,6 +13,8 @@ Parameters:
     Type: String
   DynamoDBTable:
     Type: String
+  DynamoDBTableStreamArn:
+    Type: String
   FFmpegLambdaVersion:
     Type: String
     Default: 1.0.0
@@ -415,6 +417,48 @@ Resources:
         Sourcemap: true
         EntryPoints:
           - getObject.ts
+
+  CreateCollectionAndIndexFacesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/
+      Handler: createCollectionIndexFaces.lambdaHandler
+      Runtime: nodejs22.x
+      MemorySize: 256
+      Timeout: 120
+      Architectures:
+        - arm64
+      Events:
+        DynamoDBStreamEvent:
+          Type: DynamoDB
+          Properties:
+            Stream: !Ref DynamoDBTableStreamArn
+            StartingPosition: LATEST
+            BatchSize: 100
+            MaximumRetryAttempts: 2
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"eventName": ["INSERT"]}'
+      Environment:
+        Variables:
+          UPLOAD_BUCKET_NAME: !Ref UploadBucket
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - S3FullAccessPolicy: 
+            BucketName: !Ref UploadBucket
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: esm
+        Minify: false
+        Target: "es2020"
+        Sourcemap: true
+        OutExtension:
+          - .js=.mjs
+        Banner:
+          - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
+        EntryPoints:
+          - createCollectionIndexFaces.ts
 
 
   ## Sharp lambda layer
