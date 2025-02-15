@@ -418,11 +418,11 @@ Resources:
         EntryPoints:
           - getObject.ts
 
-  CreateCollectionAndIndexFacesFunction:
+  IndexFacesFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/src/
-      Handler: createCollectionIndexFaces.lambdaHandler
+      Handler: indexFaces.lambdaHandler
       Runtime: nodejs22.x
       MemorySize: 256
       Timeout: 120
@@ -442,10 +442,20 @@ Resources:
       Environment:
         Variables:
           UPLOAD_BUCKET_NAME: !Ref UploadBucket
+          DYNAMODB_TABLE: !Ref DynamoDBTable
       Policies:
         - AWSLambdaBasicExecutionRole
         - S3FullAccessPolicy: 
             BucketName: !Ref UploadBucket
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+        - Statement:
+            Effect: Allow
+            Action:
+              - rekognition:DescribeCollection
+              - rekognition:CreateCollection
+              - rekognition:IndexFaces
+            Resource: !Sub "arn:aws:rekognition:${AWS::Region}:${AWS::AccountId}:collection/*"
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -458,7 +468,7 @@ Resources:
         Banner:
           - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
         EntryPoints:
-          - createCollectionIndexFaces.ts
+          - indexFaces.ts
 
 
   ## Sharp lambda layer

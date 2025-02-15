@@ -82,5 +82,6 @@ async function searchFacesByImage() {
 }
 
 // indexFaces();
-describeCollection();
+// describeCollection();
 // searchFacesByImage();
+createCollection();
