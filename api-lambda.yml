@@ -438,7 +438,20 @@ Resources:
             MaximumRetryAttempts: 2
             FilterCriteria:
               Filters:
-                - Pattern: '{"eventName": ["INSERT"]}'
+                - Pattern: '
+                    {
+                      "eventName": ["INSERT"],
+                      "dynamodb": {
+                        "NewImage": {
+                          "fileName": {
+                              "S": [{
+                                "exists": true
+                              }]
+                            }
+                          }
+                        }
+                      }
+                    '
       Environment:
         Variables:
           UPLOAD_BUCKET_NAME: !Ref UploadBucket

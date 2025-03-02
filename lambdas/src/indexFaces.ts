@@ -1,4 +1,4 @@
-import { AttributeValue, DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { AttributeValue, BatchWriteItemCommand, DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
 import {
     Attribute,
     CreateCollectionCommand,
@@ -67,9 +67,7 @@ export const lambdaHandler = async (event: DynamoDBStreamEvent, _context: Contex
     try {
         for (const record of event.Records) {
             if (record.dynamodb?.NewImage) {
-                const newImage = record.dynamodb.NewImage as {
-                    [key: string]: AttributeValue;
-                };
+                const newImage = record.dynamodb.NewImage as { [key: string]: AttributeValue };
                 const data = unmarshall(newImage) as DynamoDBRecord;
                 const { PK, SK, fileName } = data;
 
@@ -79,27 +77,60 @@ export const lambdaHandler = async (event: DynamoDBStreamEvent, _context: Contex
                 console.log('Indexing faces...');
                 const output = await indexFaces(PK, `${PK}/${fileName}`);
 
-                console.log('Updating item with indexed faces...');
+                let imageId: string | undefined = '';
+                const putRequests = (output.FaceRecords || [])
+                    .map((faceRecord) => {
+                        const boundingBox = faceRecord.Face?.BoundingBox;
+                        const faceId = faceRecord.Face?.FaceId;
+                        imageId = faceRecord.Face?.ImageId;
+                        const confidence = faceRecord.Face?.Confidence;
+
+                        if (!faceId || !imageId) return null;
+
+                        return {
+                            PutRequest: {
+                                Item: marshall({
+                                    PK: `IMAGE#${imageId}`,
+                                    SK: `FACE#${faceId}`,
+                                    boundingBox,
+                                    confidence,
+                                }),
+                            },
+                        };
+                    })
+                    .filter((item): item is { PutRequest: { Item: Record<string, AttributeValue> } } => !!item);
+
+                // DynamoDB allows max 25 items per batch
+                const BATCH_SIZE = 25;
+                for (let i = 0; i < putRequests.length; i += BATCH_SIZE) {
+                    const batch = putRequests.slice(i, i + BATCH_SIZE);
+                    console.log(`Inserting ${batch.length} records into DynamoDB...`);
+                    const params = {
+                        RequestItems: {
+                            [DYNAMODB_TABLE]: batch,
+                        },
+                    };
+                    await dynamodbClient.send(new BatchWriteItemCommand(params));
+                }
+                console.log(`Successfully inserted ${putRequests.length} records into DynamoDB.`);
+
+                console.log('Updating item with imageId...');
                 const updateDetailsCommand = new UpdateItemCommand({
                     TableName: DYNAMODB_TABLE as string,
                     Key: {
                         PK: { S: PK },
                         SK: { S: SK },
                     },
-                    UpdateExpression: 'SET #details = :details',
+                    UpdateExpression: 'SET #imageId = :imageId',
                     ExpressionAttributeNames: {
-                        '#details': 'details',
+                        '#imageId': 'imageId',
                     },
                     ExpressionAttributeValues: {
-                        ':details': {
-                            M: marshall(output, {
-                                removeUndefinedValues: true,
-                            }),
-                        },
+                        ':imageId': { S: imageId },
                     },
                 });
                 await dynamodbClient.send(updateDetailsCommand);
-                console.log('Indexed faces and updated item.');
+                console.log(`Item updated with imageId: ${imageId}`);
             }
         }
     } catch (error) {
