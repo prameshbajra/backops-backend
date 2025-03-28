@@ -1,5 +1,8 @@
 # backop-backend
 
+
+> Architecture diagram is on drawio: BackopsBackendArchi.drawio file.
+
 ### Deployment command
 
 ```
