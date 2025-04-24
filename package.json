@@ -5,5 +5,9 @@
     "@aws-sdk/util-dynamodb": "^3.645.0",
     "axios": "^1.7.3",
     "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.149",
+    "@types/node": "^22.14.1"
   }
 }
