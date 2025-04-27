@@ -48,6 +48,9 @@ async function ensureCollection(collectionId: string): Promise<void> {
 }
 
 async function indexFaces(collectionID: string, s3PathForObject: string): Promise<IndexFacesCommandOutput> {
+    console.log(`Indexing faces for collection "${collectionID}"...`);
+    console.log(`Bucket Name: ${UPLOAD_BUCKET_NAME}`);
+    console.log(`S3 Path: ${s3PathForObject}`);
     const indexFacesCommand = new IndexFacesCommand({
         CollectionId: collectionID,
         Image: {
