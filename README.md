@@ -11,6 +11,7 @@ sam build && sam deploy
 
 ### To start
 Install both npm and npm dev dependencies. 
+And also cd into the lambdas directory and install the dependencies there as well. 
 ```
 npm install --include=dev
 ```

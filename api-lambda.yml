@@ -421,7 +421,7 @@ Resources:
   IndexFacesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/src/
+      CodeUri: lambdas/src/rekognition/
       Handler: indexFaces.lambdaHandler
       Runtime: nodejs22.x
       MemorySize: 256
@@ -483,6 +483,37 @@ Resources:
         EntryPoints:
           - indexFaces.ts
 
+  GetFacesDataFunction: 
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/rekognition/
+      Handler: getFaces.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        UploadEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /get-faces
+            Method: POST
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getFaces.ts
 
   ## Sharp lambda layer
   SharpLayer:

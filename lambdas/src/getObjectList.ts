@@ -36,7 +36,7 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
             ExpressionAttributeValues: {
                 ':cognitoUserId': { S: cognitoUserId },
             },
-            ProjectionExpression: 'PK, SK, fileName, fileSize',
+            ProjectionExpression: 'PK, SK, fileName, fileSize, imageId',
             ScanIndexForward: false, // For descending order
             Limit: PAGE_SIZE,
         };

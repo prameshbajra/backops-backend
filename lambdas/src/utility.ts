@@ -4,7 +4,6 @@ import {
     TooManyRequestsException,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { Readable } from 'stream';
 import { HEADERS } from './headers';
 
 const cognitoClient = new CognitoIdentityProvider({ region: process.env.AWS_REGION });

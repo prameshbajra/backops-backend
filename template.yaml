@@ -15,6 +15,7 @@ Resources:
     Properties:
       Location: cognito.yml
 
+  # Database (DynamoDB) Stack
   DatabaseStack:
     Type: AWS::Serverless::Application
     Properties:
