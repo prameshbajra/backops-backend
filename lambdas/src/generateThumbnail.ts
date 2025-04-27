@@ -16,6 +16,9 @@ const s3Client = new S3Client({ region: process.env.AWS_REGION, useAccelerateEnd
 const pipelineAsync = promisify(pipeline);
 const execPromise = promisify(exec);
 
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.heic', '.dng'];
+const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv'];
+
 interface S3ObjectDetail {
     key: string;
     size: number;
@@ -52,10 +55,8 @@ const downloadFileFromS3 = async (key: string, fileName: string): Promise<string
 };
 
 const generateThumbnail = async (userId: string, fileName: string, inputFilePath: string): Promise<void> => {
-    const isImage =
-        fileName.toLowerCase().endsWith('.jpg') ||
-        fileName.toLowerCase().endsWith('.jpeg') ||
-        fileName.toLowerCase().endsWith('.png');
+    const isImage = IMAGE_EXTENSIONS.some((ext) => fileName.toLowerCase().endsWith(ext));
+    const isVideo = VIDEO_EXTENSIONS.some((ext) => fileName.toLowerCase().endsWith(ext));
 
     if (isImage) {
         console.log('Thumbnail generated for image');
@@ -64,16 +65,10 @@ const generateThumbnail = async (userId: string, fileName: string, inputFilePath
         const thumbnailBuffer = await sharp(inputFilePath).resize(THUMBNAIL_WIDTH).toBuffer();
         await uploadThumbnail(userId, thumbnailFileName, thumbnailBuffer);
         console.log('Thumbnail uploaded to S3:', thumbnailFileName);
-    } else if (
-        fileName.toLowerCase().endsWith('.mp4') ||
-        fileName.toLowerCase().endsWith('.mov') ||
-        fileName.toLowerCase().endsWith('.avi') ||
-        fileName.toLowerCase().endsWith('.mkv')
-    ) {
+    } else if (isVideo) {
         const fileNameWithoutExtension = fileName.split('.').slice(0, -1).join('.');
         const thumbnailFileName = `${fileNameWithoutExtension}.jpg`;
         const thumbnailFilePath = path.join(TMP_FOLDER, thumbnailFileName);
-
         await generateThumbnailForVideo(inputFilePath, thumbnailFilePath);
 
         const thumbnailBuffer = fs.readFileSync(thumbnailFilePath);
