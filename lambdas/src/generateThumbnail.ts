@@ -6,6 +6,7 @@ import path from 'path';
 import sharp from 'sharp';
 import { Readable, pipeline } from 'stream';
 import { promisify } from 'util';
+import { isImage, isVideo } from './utility';
 
 const UPLOAD_BUCKET_NAME = process.env.UPLOAD_BUCKET_NAME as string;
 const THUMBNAIL_BUCKET_NAME = process.env.THUMBNAIL_BUCKET_NAME as string;
@@ -15,9 +16,6 @@ const TMP_FOLDER = '/tmp';
 const s3Client = new S3Client({ region: process.env.AWS_REGION, useAccelerateEndpoint: true });
 const pipelineAsync = promisify(pipeline);
 const execPromise = promisify(exec);
-
-const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.heic', '.dng'];
-const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv'];
 
 interface S3ObjectDetail {
     key: string;
@@ -55,17 +53,16 @@ const downloadFileFromS3 = async (key: string, fileName: string): Promise<string
 };
 
 const generateThumbnail = async (userId: string, fileName: string, inputFilePath: string): Promise<void> => {
-    const isImage = IMAGE_EXTENSIONS.some((ext) => fileName.toLowerCase().endsWith(ext));
-    const isVideo = VIDEO_EXTENSIONS.some((ext) => fileName.toLowerCase().endsWith(ext));
+    const image: boolean = isImage(fileName);
+    const video: boolean = isVideo(fileName);
 
-    if (isImage) {
+    if (image) {
         console.log('Thumbnail generated for image');
-        const fileNameWithoutExtension = fileName.split('.').slice(0, -1).join('.');
-        const thumbnailFileName = `${fileNameWithoutExtension}.jpg`;
         const thumbnailBuffer = await sharp(inputFilePath).resize(THUMBNAIL_WIDTH).toBuffer();
-        await uploadThumbnail(userId, thumbnailFileName, thumbnailBuffer);
-        console.log('Thumbnail uploaded to S3:', thumbnailFileName);
-    } else if (isVideo) {
+        await uploadThumbnail(userId, fileName, thumbnailBuffer);
+        console.log('Thumbnail uploaded to S3:', fileName);
+    } else if (video) {
+        console.log('Generating thumbnail for video');
         const fileNameWithoutExtension = fileName.split('.').slice(0, -1).join('.');
         const thumbnailFileName = `${fileNameWithoutExtension}.jpg`;
         const thumbnailFilePath = path.join(TMP_FOLDER, thumbnailFileName);

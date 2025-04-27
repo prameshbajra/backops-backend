@@ -7,6 +7,8 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { HEADERS } from './headers';
 
 const cognitoClient = new CognitoIdentityProvider({ region: process.env.AWS_REGION });
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.heic', '.dng'];
+const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv'];
 
 export const respond = (body: unknown, statusCode = 200): APIGatewayProxyResult => ({
     statusCode: statusCode,
@@ -50,4 +52,12 @@ export const getUserInfo = async (accessToken: string, retryCount = 5): Promise<
 export const validateAccessToken = (event: APIGatewayProxyEvent): string | null => {
     const accessToken = event.headers.authorization;
     return accessToken || null;
+};
+
+export const isImage = (fileName: string): boolean => {
+    return IMAGE_EXTENSIONS.some((ext) => fileName.toLowerCase().endsWith(ext));
+};
+
+export const isVideo = (fileName: string): boolean => {
+    return VIDEO_EXTENSIONS.some((ext) => fileName.toLowerCase().endsWith(ext));
 };

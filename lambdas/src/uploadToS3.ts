@@ -4,6 +4,8 @@ import { APIGatewayProxyEvent, APIGatewayProxyHandler, Context } from 'aws-lambd
 import {
     getUserInfo,
     internalServerErrorResponse,
+    isImage,
+    isVideo,
     respond,
     unauthorizedResponse,
     validateAccessToken,
@@ -28,7 +30,16 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event: APIGatewayPro
 
     const body = JSON.parse(event.body || '{}');
     const { fileName, fileSize } = body;
-    const key = `${cognitoUserId}/${fileName}`;
+    if (!fileName || !fileSize) {
+        return respond({ message: 'Missing fileName or fileSize' }, 400);
+    }
+    let newFileName = fileName;
+    if (isImage(fileName)) {
+        newFileName = fileName.replace(/\.[^/.]+$/, '.jpg');
+    } else if (isVideo(fileName)) {
+        newFileName = fileName.replace(/\.[^/.]+$/, '.mp4');
+    }
+    const key = `${cognitoUserId}/${newFileName}`;
     const numberOfParts = Math.ceil(fileSize / PART_SIZE);
 
     try {
@@ -46,7 +57,7 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event: APIGatewayPro
             const presignedUrl = await getSignedUrl(s3Client, uploadPartCommand, { expiresIn: 3600 });
             presignedUrls.push(presignedUrl);
         }
-        return respond({ uploadId: UploadId, presignedUrls });
+        return respond({ uploadId: UploadId, presignedUrls, fileName: newFileName, fileSize }, 200);
     } catch (error) {
         return internalServerErrorResponse(error);
     }

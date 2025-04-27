@@ -53,15 +53,15 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
     }
 
     const bucketName = process.env.BUCKET_NAME as string;
-    const { uploadId, key, parts, fileName, fileSize } = JSON.parse(event.body || '{}');
+    const { uploadId, fileName, fileSize, parts } = JSON.parse(event.body || '{}');
 
-    if (!uploadId || !key || !parts) {
+    if (!uploadId || !fileName || !parts) {
         return customErrorResponse(400, 'Missing required parameters');
     }
 
     const params = {
         Bucket: bucketName,
-        Key: `${cognitoUserId}/${key}`,
+        Key: `${cognitoUserId}/${fileName}`,
         UploadId: uploadId,
         MultipartUpload: { Parts: parts },
     };
