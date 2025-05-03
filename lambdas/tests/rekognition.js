@@ -3,6 +3,7 @@ import {
     ListCollectionsCommand,
     CreateCollectionCommand,
     DescribeCollectionCommand,
+    SearchFacesCommand,
     SearchFacesByImageCommand,
     DeleteCollectionCommand,
     IndexFacesCommand,
@@ -70,7 +71,7 @@ async function searchFacesByImage() {
         Image: {
             S3Object: {
                 Bucket: BUCKET_NAME,
-                Name: '01b37d5a-3061-70c5-909f-a302900e9e89/1604226931028.jpg',
+                Name: 'Xnip2025-05-03_21-19-44.png',
             },
         },
         MaxFaces: 5,
@@ -79,6 +80,21 @@ async function searchFacesByImage() {
     console.log('Search Faces By Image Response: ', searchFacesByImageResponse);
     const filePath = './lambdas/tests/searchFacesByImage.json';
     await fs.writeFile(filePath, JSON.stringify(searchFacesByImageResponse, null, 2), 'utf-8');
+    console.log(`Response has been written to ${filePath}`);
+}
+
+async function searchFacesByFaceId(faceId) {
+    const searchFacesCommand = new SearchFacesCommand({
+        CollectionId: COLLECTION_ID,
+        FaceId: faceId,
+        MaxFaces: 5,
+    });
+
+    const searchFacesResponse = await client.send(searchFacesCommand);
+    console.log('Search Faces Response: ', searchFacesResponse);
+
+    const filePath = './lambdas/tests/searchFacesByFaceId.json';
+    await fs.writeFile(filePath, JSON.stringify(searchFacesResponse, null, 2), 'utf-8');
     console.log(`Response has been written to ${filePath}`);
 }
 
@@ -107,7 +123,8 @@ async function listAllCollections() {
 // indexFaces();
 // describeCollection();
 // searchFacesByImage();
+searchFacesByFaceId('f67d73fe-427c-40b2-9a3c-adceb37d4d36');
 // createCollection();
 // deleteCollection('01b37d5a-3061-70c5-909f-a302900e9e89');
 // deleteCollection('6ed44618-f837-341a-9e2e-2c97b923c0c0');
-listAllCollections();
+// listAllCollections();

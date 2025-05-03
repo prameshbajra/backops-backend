@@ -1,26 +1,11 @@
 {
   "$metadata": {
     "httpStatusCode": 200,
-    "requestId": "39072b01-fa4f-4dc1-a61d-18a56ca59764",
+    "requestId": "3d0aa4e3-97fa-4e01-afbb-082f21a208af",
     "attempts": 1,
     "totalRetryDelay": 0
   },
   "FaceMatches": [
-    {
-      "Face": {
-        "BoundingBox": {
-          "Height": 0.23353099822998047,
-          "Left": 0.31595200300216675,
-          "Top": 0.33738601207733154,
-          "Width": 0.3051140010356903
-        },
-        "Confidence": 100,
-        "FaceId": "f67d73fe-427c-40b2-9a3c-adceb37d4d36",
-        "ImageId": "51ad5261-dfcd-339c-989a-644cbcbda4f1",
-        "IndexFacesModelVersion": "7.0"
-      },
-      "Similarity": 99.9999771118164
-    },
     {
       "Face": {
         "BoundingBox": {
@@ -34,7 +19,7 @@
         "ImageId": "6dc4426f-774c-367e-9b20-cfae4da20f79",
         "IndexFacesModelVersion": "7.0"
       },
-      "Similarity": 99.9892349243164
+      "Similarity": 99.99693298339844
     },
     {
       "Face": {
@@ -49,22 +34,7 @@
         "ImageId": "4abf79ed-4299-3d17-9bff-ea0ec874ec24",
         "IndexFacesModelVersion": "7.0"
       },
-      "Similarity": 99.98464965820312
-    },
-    {
-      "Face": {
-        "BoundingBox": {
-          "Height": 0.2443300038576126,
-          "Left": 0.431331992149353,
-          "Top": 0.2670550048351288,
-          "Width": 0.2925049960613251
-        },
-        "Confidence": 99.9979019165039,
-        "FaceId": "daa20e8d-06cb-4f9e-b05b-ce9deb00f9ce",
-        "ImageId": "6ed44618-f837-341a-9e2e-2c97b923c0c0",
-        "IndexFacesModelVersion": "7.0"
-      },
-      "Similarity": 99.97659301757812
+      "Similarity": 99.98979949951172
     },
     {
       "Face": {
@@ -79,15 +49,39 @@
         "ImageId": "27419c13-992e-3665-aeaf-6863ccfad453",
         "IndexFacesModelVersion": "7.0"
       },
-      "Similarity": 99.97163391113281
+      "Similarity": 99.98423767089844
+    },
+    {
+      "Face": {
+        "BoundingBox": {
+          "Height": 0.2443300038576126,
+          "Left": 0.431331992149353,
+          "Top": 0.2670550048351288,
+          "Width": 0.2925049960613251
+        },
+        "Confidence": 99.9979019165039,
+        "FaceId": "daa20e8d-06cb-4f9e-b05b-ce9deb00f9ce",
+        "ImageId": "6ed44618-f837-341a-9e2e-2c97b923c0c0",
+        "IndexFacesModelVersion": "7.0"
+      },
+      "Similarity": 99.9770736694336
+    },
+    {
+      "Face": {
+        "BoundingBox": {
+          "Height": 0.10507600009441376,
+          "Left": 0.08376199752092361,
+          "Top": 0.3423610031604767,
+          "Width": 0.037184201180934906
+        },
+        "Confidence": 99.99480438232422,
+        "FaceId": "f57ae255-cc6d-4aec-8f71-2674e1d827e2",
+        "ImageId": "05896f72-0bec-34ef-a9d3-7695b1bfec6e",
+        "IndexFacesModelVersion": "7.0"
+      },
+      "Similarity": 99.96711730957031
     }
   ],
   "FaceModelVersion": "7.0",
-  "SearchedFaceBoundingBox": {
-    "Height": 0.7789450287818909,
-    "Left": 0.11980442702770233,
-    "Top": 0.10960850119590759,
-    "Width": 0.7715050578117371
-  },
-  "SearchedFaceConfidence": 99.99990844726562
+  "SearchedFaceId": "f67d73fe-427c-40b2-9a3c-adceb37d4d36"
 }
