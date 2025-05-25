@@ -123,7 +123,7 @@ async function listAllCollections() {
 // indexFaces();
 // describeCollection();
 // searchFacesByImage();
-searchFacesByFaceId('f67d73fe-427c-40b2-9a3c-adceb37d4d36');
+searchFacesByFaceId('b2d5365d-71c0-4bd9-8724-469263cc7086');
 // createCollection();
 // deleteCollection('01b37d5a-3061-70c5-909f-a302900e9e89');
 // deleteCollection('6ed44618-f837-341a-9e2e-2c97b923c0c0');
