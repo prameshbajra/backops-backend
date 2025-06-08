@@ -31,7 +31,7 @@ async function updateFaceNameInDynamoDB(imageId: string, faceId: string, faceNam
 async function bulkUpdateFaceNames(userId: string, faceId: string, faceName: string) {
     const command = new SearchFacesCommand({
         CollectionId: userId,
-        FaceId: faceId.replace('FACE#', ''), // Remove 'FACE#' prefix if it exists
+        FaceId: faceId.replace('FACE#', ''),
         MaxFaces: 20,
     });
     const response = await rekognitionClient.send(command);

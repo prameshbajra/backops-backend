@@ -483,6 +483,65 @@ Resources:
         EntryPoints:
           - indexFaces.ts
 
+  CheckForExistingFacesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/rekognition/
+      Handler: checkForExistingFaces.lambdaHandler
+      Runtime: nodejs22.x
+      MemorySize: 256
+      Timeout: 120
+      Architectures:
+        - arm64
+      Events:
+        DynamoDBStreamEvent:
+          Type: DynamoDB
+          Properties:
+            Stream: !Ref DynamoDBTableStreamArn
+            StartingPosition: LATEST
+            BatchSize: 100
+            MaximumRetryAttempts: 2
+            FilterCriteria:
+              Filters:
+                - Pattern: |
+                    {
+                      "eventName": ["MODIFY"],
+                      "dynamodb": {
+                        "NewImage": {
+                          "imageId": {
+                            "S": [{
+                              "exists": true
+                            }]
+                          }
+                        }
+                      }
+                    }
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+        - Statement:
+            Effect: Allow
+            Action:
+              - rekognition:SearchFaces
+            Resource: !Sub "arn:aws:rekognition:${AWS::Region}:${AWS::AccountId}:collection/*"
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: esm
+        Minify: false
+        Target: "es2020"
+        Sourcemap: true
+        OutExtension:
+          - .js=.mjs
+        Banner:
+          - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
+        EntryPoints:
+          - checkForExistingFaces.ts
+
   GetFacesDataFunction: 
     Type: AWS::Serverless::Function
     Properties:
@@ -541,10 +600,7 @@ Resources:
         - Statement:
             Effect: Allow
             Action:
-              - rekognition:DescribeCollection
-              - rekognition:CreateCollection
               - rekognition:SearchFaces
-              - rekognition:IndexFaces
             Resource: !Sub "arn:aws:rekognition:${AWS::Region}:${AWS::AccountId}:collection/*"
     Metadata:
       BuildMethod: esbuild

@@ -97,6 +97,7 @@ export const lambdaHandler = async (event: DynamoDBStreamEvent, _context: Contex
                                     SK: `FACE#${faceId}`,
                                     boundingBox,
                                     confidence,
+                                    updatedAt: new Date().toISOString(),
                                 }),
                             },
                         };
@@ -116,24 +117,31 @@ export const lambdaHandler = async (event: DynamoDBStreamEvent, _context: Contex
                     await dynamodbClient.send(new BatchWriteItemCommand(params));
                 }
                 console.log(`Successfully inserted ${putRequests.length} records into DynamoDB.`);
-
-                console.log('Updating item with imageId...');
-                const updateDetailsCommand = new UpdateItemCommand({
-                    TableName: DYNAMODB_TABLE as string,
-                    Key: {
-                        PK: { S: PK },
-                        SK: { S: SK },
-                    },
-                    UpdateExpression: 'SET #imageId = :imageId',
-                    ExpressionAttributeNames: {
-                        '#imageId': 'imageId',
-                    },
-                    ExpressionAttributeValues: {
-                        ':imageId': { S: imageId },
-                    },
-                });
-                await dynamodbClient.send(updateDetailsCommand);
-                console.log(`Item updated with imageId: ${imageId}`);
+                if (imageId && imageId.trim() !== '') {
+                    console.log(`Updating imageId : ${imageId} in PK: ${PK} SK: ${SK}`);
+                    const updateDetailsCommand = new UpdateItemCommand({
+                        TableName: DYNAMODB_TABLE,
+                        Key: {
+                            PK: { S: PK },
+                            SK: { S: SK },
+                        },
+                        UpdateExpression: 'SET #imageId = :imageId, #updatedAt = :updatedAt',
+                        ExpressionAttributeNames: {
+                            '#imageId': 'imageId',
+                            '#updatedAt': 'updatedAt',
+                        },
+                        ExpressionAttributeValues: {
+                            ':imageId': { S: imageId },
+                            ':updatedAt': { S: new Date().toISOString() },
+                        },
+                    });
+                    await dynamodbClient.send(updateDetailsCommand);
+                    console.log(
+                        `Item updated with imageId: ${imageId}. This update will trigger checkForExistingFaces lambda function as well.`,
+                    );
+                } else {
+                    console.log('No valid imageId found. Skipping item update.');
+                }
             }
         }
     } catch (error) {
