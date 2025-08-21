@@ -1,4 +1,4 @@
-import { DeleteItemCommand, BatchWriteItemCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DeleteItemCommand, BatchWriteItemCommand, DynamoDBClient, QueryCommand, WriteRequest } from '@aws-sdk/client-dynamodb';
 import { DeleteObjectsCommand, S3Client } from '@aws-sdk/client-s3';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { APIGatewayProxyHandler } from 'aws-lambda';
@@ -20,9 +20,9 @@ interface FileItem {
     PK: string;
     SK: string;
     fileName: string;
+    imageId?: string;
 }
 
-// Helper function to delete files from an S3 bucket
 const deleteFilesFromBucket = async (bucketName: string, keys: { Key: string }[]) => {
     const command = new DeleteObjectsCommand({
         Bucket: bucketName,
@@ -31,7 +31,6 @@ const deleteFilesFromBucket = async (bucketName: string, keys: { Key: string }[]
     return s3Client.send(command);
 };
 
-// Helper function to delete records from DynamoDB in batch
 const deleteRecordsFromDynamoDB = async (files: FileItem[]) => {
     const deleteRequests = files.map((file) => ({
         DeleteRequest: {
@@ -46,6 +45,65 @@ const deleteRecordsFromDynamoDB = async (files: FileItem[]) => {
     });
 
     return dynamoDBClient.send(batchCommand);
+};
+
+const deleteDanglingImageIds = async (files: FileItem[]) => {
+    const imageIds = files.map((file) => file.imageId).filter((id): id is string => id !== undefined);
+    if (imageIds.length === 0) {
+        console.log('No image IDs to delete');
+        return;
+    }
+    console.log('Deleting these imageIds: ', imageIds);
+
+    try {
+        const allItemsToDelete: WriteRequest[] = [];
+
+        // Because we cannot just delete using only PK, we have to query them all and then delete them in batch ...
+        for (const imageId of imageIds) {
+            const queryCommand = new QueryCommand({
+                TableName: DYNAMODB_TABLE,
+                KeyConditionExpression: 'PK = :pk AND begins_with(SK, :skPrefix)',
+                ExpressionAttributeValues: marshall({
+                    ':pk': `IMAGE#${imageId}`,
+                    ':skPrefix': 'FACE#',
+                }),
+            });
+
+            const queryResult = await dynamoDBClient.send(queryCommand);
+
+            if (queryResult.Items) {
+                queryResult.Items.forEach((item) => {
+                    allItemsToDelete.push({
+                        DeleteRequest: {
+                            Key: {
+                                PK: item.PK,
+                                SK: item.SK,
+                            },
+                        },
+                    });
+                });
+            }
+        }
+
+        if (allItemsToDelete.length === 0) {
+            console.log('No face records found to delete');
+            return;
+        }
+
+        // By default, dynamoDB can only batch 25 items but here we do not need to delete more than 25 faces for a single picture ...
+        const batchCommand = new BatchWriteItemCommand({
+            RequestItems: {
+                [DYNAMODB_TABLE]: allItemsToDelete,
+            },
+        });
+
+        await dynamoDBClient.send(batchCommand);
+        console.log(`Deleted batch of ${allItemsToDelete.length} face records`);
+        console.log(`Successfully deleted ${allItemsToDelete.length} face records for ${imageIds.length} images`);
+    } catch (error) {
+        console.error('Error deleting dangling image IDs:', error);
+        throw error;
+    }
 };
 
 export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => {
@@ -74,6 +132,7 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
 
         // Perform DynamoDB deletions
         await deleteRecordsFromDynamoDB(files);
+        await deleteDanglingImageIds(files);
 
         console.log('Deleted items successfully: ', `User - ${cognitoUserId}`);
 
