@@ -15,13 +15,25 @@ const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE as string;
 const dynamoDbClient = new DynamoDBClient({});
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
-const saveDataToDynamoDb = async (userId: string, fileName: string, size: number) => {
+const saveDataToDynamoDb = async (userId: string, fileName: string, size: number, imageMetadata?: any) => {
     const currentDate = new Date().toISOString();
+    let sortKey = currentDate;
+    if (imageMetadata?.DateTimeOriginal) {
+        sortKey = imageMetadata.DateTimeOriginal;
+    } else if (imageMetadata?.CreateDate) {
+        sortKey = imageMetadata.CreateDate;
+    } else if (imageMetadata?.ModifyDate) {
+        sortKey = imageMetadata.ModifyDate;
+    }
+
     const item = {
         PK: userId,
-        SK: currentDate,
+        SK: sortKey,
         fileName: fileName,
         fileSize: size,
+        imageMetadata: imageMetadata,
+        createdAt: currentDate,
+        updatedAt: currentDate,
     };
     console.log('Item to be inserted into DynamoDB:', item);
 
@@ -53,7 +65,7 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
     }
 
     const bucketName = process.env.BUCKET_NAME as string;
-    const { uploadId, fileName, fileSize, parts } = JSON.parse(event.body || '{}');
+    const { uploadId, fileName, fileSize, parts, imageMetadata } = JSON.parse(event.body || '{}');
 
     if (!uploadId || !fileName || !parts) {
         return customErrorResponse(400, 'Missing required parameters');
@@ -69,7 +81,7 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
     try {
         const command = new CompleteMultipartUploadCommand(params);
         const data = await s3Client.send(command);
-        await saveDataToDynamoDb(cognitoUserId, fileName, fileSize);
+        await saveDataToDynamoDb(cognitoUserId, fileName, fileSize, imageMetadata);
         return respond(data);
     } catch (error) {
         return internalServerErrorResponse(error);
