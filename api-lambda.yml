@@ -616,6 +616,70 @@ Resources:
         EntryPoints:
           - updateFaceData.ts
 
+  CreateUpdateAlbumFunction: 
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/album/
+      Handler: createUpdateAlbum.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        HttpEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /create-update-album
+            Method: POST
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - createUpdateAlbum.ts
+
+  GetAllAlbumForUserFunction: 
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/album/
+      Handler: getAllAlbumForUser.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        HttpEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /get-album-for-user
+            Method: GET
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getAllAlbumForUser.ts
+
   ## Sharp lambda layer
   SharpLayer:
     Type: AWS::Serverless::LayerVersion

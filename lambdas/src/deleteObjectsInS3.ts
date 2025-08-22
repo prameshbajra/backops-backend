@@ -1,6 +1,6 @@
-import { DeleteItemCommand, BatchWriteItemCommand, DynamoDBClient, QueryCommand, WriteRequest } from '@aws-sdk/client-dynamodb';
+import { BatchWriteItemCommand, DynamoDBClient, QueryCommand, WriteRequest } from '@aws-sdk/client-dynamodb';
 import { DeleteObjectsCommand, S3Client } from '@aws-sdk/client-s3';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { marshall } from '@aws-sdk/util-dynamodb';
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import {
     getUserInfo,
