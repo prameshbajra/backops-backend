@@ -61,3 +61,11 @@ export const isImage = (fileName: string): boolean => {
 export const isVideo = (fileName: string): boolean => {
     return VIDEO_EXTENSIONS.some((ext) => fileName.toLowerCase().endsWith(ext));
 };
+
+export const chunkArray = <T>(array: T[], chunkSize: number): T[][] => {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+        chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
+};

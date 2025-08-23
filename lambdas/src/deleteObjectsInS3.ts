@@ -3,6 +3,7 @@ import { DeleteObjectsCommand, S3Client } from '@aws-sdk/client-s3';
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import {
+    chunkArray,
     getUserInfo,
     internalServerErrorResponse,
     respond,
@@ -38,13 +39,22 @@ const deleteRecordsFromDynamoDB = async (files: FileItem[]) => {
         },
     }));
 
-    const batchCommand = new BatchWriteItemCommand({
-        RequestItems: {
-            [DYNAMODB_TABLE]: deleteRequests,
-        },
-    });
+    const chunks = chunkArray(deleteRequests, 25);
 
-    return dynamoDBClient.send(batchCommand);
+    for (const chunk of chunks) {
+        const batchCommand = new BatchWriteItemCommand({
+            RequestItems: {
+                [DYNAMODB_TABLE]: chunk,
+            },
+        });
+
+        const response = await dynamoDBClient.send(batchCommand);
+
+        if (response.UnprocessedItems && Object.keys(response.UnprocessedItems).length > 0) {
+            console.warn('Some items were not processed:', response.UnprocessedItems);
+            throw new Error('Failed to delete some items from DynamoDB');
+        }
+    }
 };
 
 const deleteDanglingImageIds = async (files: FileItem[]) => {
@@ -90,15 +100,23 @@ const deleteDanglingImageIds = async (files: FileItem[]) => {
             return;
         }
 
-        // By default, dynamoDB can only batch 25 items but here we do not need to delete more than 25 faces for a single picture ...
-        const batchCommand = new BatchWriteItemCommand({
-            RequestItems: {
-                [DYNAMODB_TABLE]: allItemsToDelete,
-            },
-        });
+        const chunks = chunkArray(allItemsToDelete, 25);
+        
+        for (const chunk of chunks) {
+            const batchCommand = new BatchWriteItemCommand({
+                RequestItems: {
+                    [DYNAMODB_TABLE]: chunk,
+                },
+            });
 
-        await dynamoDBClient.send(batchCommand);
-        console.log(`Deleted batch of ${allItemsToDelete.length} face records`);
+            const response = await dynamoDBClient.send(batchCommand);
+            
+            if (response.UnprocessedItems && Object.keys(response.UnprocessedItems).length > 0) {
+                console.warn('Some face records were not processed:', response.UnprocessedItems);
+                throw new Error('Failed to delete some face records from DynamoDB');
+            }
+        }
+        
         console.log(`Successfully deleted ${allItemsToDelete.length} face records for ${imageIds.length} images`);
     } catch (error) {
         console.error('Error deleting dangling image IDs:', error);
