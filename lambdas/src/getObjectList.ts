@@ -32,7 +32,6 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
     try {
         const params: QueryCommandInput = {
             TableName: DYNAMODB_TABLE,
-            KeyConditionExpression: 'PK = :cognitoUserId',
             ExpressionAttributeValues: {
                 ':cognitoUserId': { S: cognitoUserId },
             },
@@ -42,9 +41,14 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
         };
 
         if (timestampPrefix) {
-            params.KeyConditionExpression += ' AND begins_with(SK, :timestampPrefix)';
+            params.KeyConditionExpression = 'PK = :cognitoUserId AND begins_with(SK, :timestampPrefix)';
             if (params.ExpressionAttributeValues) {
                 params.ExpressionAttributeValues[':timestampPrefix'] = { S: timestampPrefix };
+            }
+        } else {
+            params.KeyConditionExpression = 'PK = :cognitoUserId AND SK < :albumPrefix';
+            if (params.ExpressionAttributeValues) {
+                params.ExpressionAttributeValues[':albumPrefix'] = { S: 'ALBUM#' };
             }
         }
 
