@@ -680,6 +680,108 @@ Resources:
         EntryPoints:
           - getAllAlbumForUser.ts
 
+  AssignPhotosToAlbumFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/album/
+      Handler: assignPhotosToAlbum.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 60
+      Architectures:
+        - arm64
+      Events:
+        HttpEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /album/{albumId}/assign
+            Method: POST
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - assignPhotosToAlbum.ts
+
+  GetAlbumPhotosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/album/
+      Handler: getAlbumPhotos.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        HttpEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /album/{albumId}/photos
+            Method: POST
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getAlbumPhotos.ts
+
+  UnassignPhotosFromAlbumFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/album/
+      Handler: unassignPhotosFromAlbum.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 60
+      Architectures:
+        - arm64
+      Events:
+        HttpEventWithAlbumId:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /album/{albumId}/unassign
+            Method: DELETE
+        HttpEventWithoutAlbumId:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /album/unassign
+            Method: DELETE
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - unassignPhotosFromAlbum.ts
+
   ## Sharp lambda layer
   SharpLayer:
     Type: AWS::Serverless::LayerVersion
