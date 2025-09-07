@@ -1,7 +1,13 @@
 import { DynamoDBClient, QueryCommand, QueryCommandInput } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import { internalServerErrorResponse, respond, validateAccessToken, unauthorizedResponse } from '../utility';
+import {
+    internalServerErrorResponse,
+    respond,
+    validateAccessToken,
+    unauthorizedResponse,
+    getUserInfo,
+} from '../utility';
 
 const dynamoDbClient = new DynamoDBClient({});
 const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE as string;
@@ -9,6 +15,9 @@ const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE as string;
 export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => {
     const accessToken = validateAccessToken(event);
     if (!accessToken) return unauthorizedResponse();
+
+    const userResponse = await getUserInfo(accessToken);
+    if (!userResponse) return internalServerErrorResponse('Failed to get user info');
 
     const body = JSON.parse(event.body || '{}');
     const { PK } = body;
