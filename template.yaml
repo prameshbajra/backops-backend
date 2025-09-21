@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: backop-backend
 
@@ -33,4 +33,3 @@ Resources:
         ThumbnailBucket: !GetAtt S3Stack.Outputs.ThumbnailBucket
         DynamoDBTable: !GetAtt DatabaseStack.Outputs.DynamoDBTable
         DynamoDBTableStreamArn: !GetAtt DatabaseStack.Outputs.DynamoDBTableStreamArn
-      

@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: API Gateway and Lambda Functions for backop-backend
 
@@ -32,10 +32,10 @@ Resources:
         ThrottlingRateLimit: 10
       CorsConfiguration:
         AllowOrigins:
-          - "*"
+          - '*'
         AllowHeaders:
-          - "Authorization"
-          - "Content-Type"
+          - Authorization
+          - Content-Type
         AllowMethods:
           - GET
           - POST
@@ -50,7 +50,7 @@ Resources:
               issuer: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
               audience:
                 - !Ref UserPoolClient
-            IdentitySource: "$request.header.Authorization"
+            IdentitySource: $request.header.Authorization
 
   BackopOpenApi:
     Type: AWS::Serverless::HttpApi
@@ -62,10 +62,10 @@ Resources:
         ThrottlingRateLimit: 10
       CorsConfiguration:
         AllowOrigins:
-          - "*"
+          - '*'
         AllowHeaders:
-          - "Authorization"
-          - "Content-Type"
+          - Authorization
+          - Content-Type
         AllowMethods:
           - GET
           - POST
@@ -172,9 +172,9 @@ Resources:
             ApiId: !Ref BackopApi
             Path: /upload
             Method: POST
-            RouteSettings:  
-              ThrottlingBurstLimit: 400 
-              ThrottlingRateLimit: 400   
+            RouteSettings:
+              ThrottlingBurstLimit: 400
+              ThrottlingRateLimit: 400
       Environment:
         Variables:
           BUCKET_NAME: !Ref UploadBucket
@@ -208,9 +208,9 @@ Resources:
             ApiId: !Ref BackopApi
             Path: /complete
             Method: POST
-            RouteSettings:  
-              ThrottlingBurstLimit: 400 
-              ThrottlingRateLimit: 400  
+            RouteSettings:
+              ThrottlingBurstLimit: 400
+              ThrottlingRateLimit: 400
       Environment:
         Variables:
           BUCKET_NAME: !Ref UploadBucket
@@ -291,7 +291,7 @@ Resources:
         - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
         - S3FullAccessPolicy:
-            BucketName: !Ref ThumbnailBucket 
+            BucketName: !Ref ThumbnailBucket
         - DynamoDBCrudPolicy:
             TableName: !Ref DynamoDBTable
     Metadata:
@@ -334,7 +334,7 @@ Resources:
           UPLOAD_BUCKET_NAME: !Ref UploadBucket
           THUMBNAIL_BUCKET_NAME: !Ref ThumbnailBucket
       Policies:
-        - S3FullAccessPolicy: 
+        - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
         - S3FullAccessPolicy:
             BucketName: !Ref ThumbnailBucket
@@ -343,18 +343,19 @@ Resources:
       BuildProperties:
         Format: esm
         Minify: false
-        Target: "es2020"
+        Target: es2020
         Sourcemap: true
         OutExtension:
           - .js=.mjs
         Banner:
-          - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
+          - js=import { createRequire } from 'module'; const require =
+            createRequire(import.meta.url);
         External:
           - sharp
         EntryPoints:
           - generateThumbnail.ts
 
-  GetObjectListFunction: 
+  GetObjectListFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/src/
@@ -386,7 +387,7 @@ Resources:
         EntryPoints:
           - getObjectList.ts
 
-  GetObjectFunction: 
+  GetObjectFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/src/
@@ -438,27 +439,15 @@ Resources:
             MaximumRetryAttempts: 2
             FilterCriteria:
               Filters:
-                - Pattern: '
-                    {
-                      "eventName": ["INSERT"],
-                      "dynamodb": {
-                        "NewImage": {
-                          "fileName": {
-                              "S": [{
-                                "exists": true
-                              }]
-                            }
-                          }
-                        }
-                      }
-                    '
+                - Pattern: ' { "eventName": ["INSERT"], "dynamodb": { "NewImage": { "fileName": {
+                    "S": [{ "exists": true }] } } } } '
       Environment:
         Variables:
           UPLOAD_BUCKET_NAME: !Ref UploadBucket
           DYNAMODB_TABLE: !Ref DynamoDBTable
       Policies:
         - AWSLambdaBasicExecutionRole
-        - S3FullAccessPolicy: 
+        - S3FullAccessPolicy:
             BucketName: !Ref UploadBucket
         - DynamoDBCrudPolicy:
             TableName: !Ref DynamoDBTable
@@ -468,18 +457,19 @@ Resources:
               - rekognition:DescribeCollection
               - rekognition:CreateCollection
               - rekognition:IndexFaces
-            Resource: !Sub "arn:aws:rekognition:${AWS::Region}:${AWS::AccountId}:collection/*"
+            Resource: !Sub arn:aws:rekognition:${AWS::Region}:${AWS::AccountId}:collection/*
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
         Format: esm
         Minify: false
-        Target: "es2020"
+        Target: es2020
         Sourcemap: true
         OutExtension:
           - .js=.mjs
         Banner:
-          - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
+          - js=import { createRequire } from 'module'; const require =
+            createRequire(import.meta.url);
         EntryPoints:
           - indexFaces.ts
 
@@ -527,22 +517,23 @@ Resources:
             Effect: Allow
             Action:
               - rekognition:SearchFaces
-            Resource: !Sub "arn:aws:rekognition:${AWS::Region}:${AWS::AccountId}:collection/*"
+            Resource: !Sub arn:aws:rekognition:${AWS::Region}:${AWS::AccountId}:collection/*
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
         Format: esm
         Minify: false
-        Target: "es2020"
+        Target: es2020
         Sourcemap: true
         OutExtension:
           - .js=.mjs
         Banner:
-          - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
+          - js=import { createRequire } from 'module'; const require =
+            createRequire(import.meta.url);
         EntryPoints:
           - checkForExistingFaces.ts
 
-  GetFacesDataFunction: 
+  GetFacesDataFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/src/rekognition/
@@ -574,7 +565,7 @@ Resources:
         EntryPoints:
           - getFaces.ts
 
-  UpdateFaceDataFunction: 
+  UpdateFaceDataFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/src/rekognition/
@@ -601,22 +592,23 @@ Resources:
             Effect: Allow
             Action:
               - rekognition:SearchFaces
-            Resource: !Sub "arn:aws:rekognition:${AWS::Region}:${AWS::AccountId}:collection/*"
+            Resource: !Sub arn:aws:rekognition:${AWS::Region}:${AWS::AccountId}:collection/*
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
         Format: esm
         Minify: false
-        Target: "es2020"
+        Target: es2020
         Sourcemap: true
         OutExtension:
           - .js=.mjs
         Banner:
-          - js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);
+          - js=import { createRequire } from 'module'; const require =
+            createRequire(import.meta.url);
         EntryPoints:
           - updateFaceData.ts
 
-  CreateUpdateAlbumFunction: 
+  CreateUpdateAlbumFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/src/album/
@@ -648,7 +640,7 @@ Resources:
         EntryPoints:
           - createUpdateAlbum.ts
 
-  GetAllAlbumForUserFunction: 
+  GetAllAlbumForUserFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/src/album/
