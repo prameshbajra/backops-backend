@@ -46,8 +46,64 @@ const saveDataToDynamoDb = async (userId: string, fileName: string, size: number
         const command = new PutItemCommand(params);
         await dynamoDbClient.send(command);
         console.log('Data successfully inserted into DynamoDB');
+        return { sortKey, createdAt: currentDate, success: true as const };
     } catch (error) {
         console.error('Error inserting data into DynamoDB:', error);
+        return { sortKey, createdAt: currentDate, success: false as const };
+    }
+};
+
+const resolveGpsCoords = (imageMetadata: any): { lat: number; lng: number } | null => {
+    if (!imageMetadata || typeof imageMetadata !== 'object') return null;
+
+    const candidates: Array<{ lat: unknown; lng: unknown }> = [
+        { lat: imageMetadata.latitude, lng: imageMetadata.longitude },
+        { lat: imageMetadata.gpsCoordinates?.latitude, lng: imageMetadata.gpsCoordinates?.longitude },
+    ];
+
+    for (const { lat, lng } of candidates) {
+        if (typeof lat === 'number' && typeof lng === 'number' && Number.isFinite(lat) && Number.isFinite(lng)) {
+            return { lat, lng };
+        }
+    }
+    return null;
+};
+
+const saveGeoRowIfApplicable = async (
+    userId: string,
+    originalSK: string,
+    fileName: string,
+    createdAt: string,
+    imageMetadata?: any,
+) => {
+    const coords = resolveGpsCoords(imageMetadata);
+    if (!coords) return;
+
+    const geoItem = {
+        PK: userId,
+        SK: `GEO#${originalSK}`,
+        lat: coords.lat,
+        lng: coords.lng,
+        fileName,
+        originalSK,
+        createdAt,
+    };
+
+    try {
+        await dynamoDbClient.send(
+            new PutItemCommand({
+                TableName: DYNAMODB_TABLE,
+                Item: marshall(geoItem),
+            }),
+        );
+        console.log('GEO inverse row written:', { userId, originalSK });
+    } catch (error) {
+        const errorName = error instanceof Error ? error.name : 'UnknownError';
+        console.error('Failed to write GEO inverse row; main upload row is unaffected', {
+            userId,
+            originalSK,
+            errorName,
+        });
     }
 };
 
@@ -81,7 +137,16 @@ export const lambdaHandler: APIGatewayProxyHandler = async (event, _context) => 
     try {
         const command = new CompleteMultipartUploadCommand(params);
         const data = await s3Client.send(command);
-        await saveDataToDynamoDb(cognitoUserId, fileName, fileSize, imageMetadata);
+        const writeResult = await saveDataToDynamoDb(cognitoUserId, fileName, fileSize, imageMetadata);
+        if (writeResult.success) {
+            await saveGeoRowIfApplicable(
+                cognitoUserId,
+                writeResult.sortKey,
+                fileName,
+                writeResult.createdAt,
+                imageMetadata,
+            );
+        }
         return respond(data);
     } catch (error) {
         return internalServerErrorResponse(error);

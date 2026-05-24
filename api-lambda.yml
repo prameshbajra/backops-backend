@@ -419,6 +419,70 @@ Resources:
         EntryPoints:
           - getObject.ts
 
+  GetMemoriesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/
+      Handler: getMemories.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        HttpEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /memories
+            Method: POST
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getMemories.ts
+
+  GetGeoPointsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/
+      Handler: getGeoPoints.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        HttpEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /geo-points
+            Method: POST
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getGeoPoints.ts
+
   IndexFacesFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -607,6 +671,70 @@ Resources:
             createRequire(import.meta.url);
         EntryPoints:
           - updateFaceData.ts
+
+  GetPeopleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/rekognition/
+      Handler: getPeople.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        HttpEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /people
+            Method: POST
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getPeople.ts
+
+  GetPersonPhotosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/src/rekognition/
+      Handler: getPersonPhotos.lambdaHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 30
+      Architectures:
+        - arm64
+      Events:
+        HttpEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BackopApi
+            Path: /people/photos
+            Method: POST
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref DynamoDBTable
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref DynamoDBTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - getPersonPhotos.ts
 
   CreateUpdateAlbumFunction:
     Type: AWS::Serverless::Function

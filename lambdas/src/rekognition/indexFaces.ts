@@ -82,25 +82,48 @@ export const lambdaHandler = async (event: DynamoDBStreamEvent, _context: Contex
 
                 let imageId: string | undefined = '';
                 const putRequests = (output.FaceRecords || [])
-                    .map((faceRecord) => {
+                    .flatMap((faceRecord) => {
                         const boundingBox = faceRecord.Face?.BoundingBox;
                         const faceId = faceRecord.Face?.FaceId;
                         imageId = faceRecord.Face?.ImageId;
                         const confidence = faceRecord.Face?.Confidence;
 
-                        if (!faceId || !imageId) return null;
+                        if (!faceId || !imageId) return [];
 
-                        return {
+                        const nowIso = new Date().toISOString();
+
+                        const faceRow = {
                             PutRequest: {
                                 Item: marshall({
                                     PK: `IMAGE#${imageId}`,
                                     SK: `FACE#${faceId}`,
                                     boundingBox,
                                     confidence,
-                                    updatedAt: new Date().toISOString(),
+                                    updatedAt: nowIso,
                                 }),
                             },
                         };
+
+                        const personRow = {
+                            PutRequest: {
+                                Item: marshall(
+                                    {
+                                        PK,
+                                        SK: `PERSON#__UNNAMED__#${faceId}`,
+                                        faceId,
+                                        imageId,
+                                        originalSK: SK,
+                                        fileName,
+                                        boundingBox,
+                                        confidence,
+                                        updatedAt: nowIso,
+                                    },
+                                    { removeUndefinedValues: true },
+                                ),
+                            },
+                        };
+
+                        return [faceRow, personRow];
                     })
                     .filter((item): item is { PutRequest: { Item: Record<string, AttributeValue> } } => !!item);
 

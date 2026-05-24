@@ -1,0 +1,15 @@
+{
+    "extends": "../lambdas/tsconfig.json",
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es2020",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "types": ["node"],
+        "typeRoots": ["../lambdas/node_modules/@types"]
+    },
+    "include": ["./**/*.ts"],
+    "exclude": ["node_modules"]
+}

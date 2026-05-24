@@ -1,29 +1,85 @@
-import { DynamoDBClient, GetItemCommand, QueryCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import {
+    AttributeValue,
+    DynamoDBClient,
+    GetItemCommand,
+    QueryCommand,
+    TransactWriteItemsCommand,
+} from '@aws-sdk/client-dynamodb';
 import { RekognitionClient, SearchFacesCommand } from '@aws-sdk/client-rekognition';
+import { marshall } from '@aws-sdk/util-dynamodb';
 import { Context, DynamoDBStreamEvent } from 'aws-lambda';
 
 const dynamoDbClient = new DynamoDBClient({});
 const rekognitionClient = new RekognitionClient({ region: process.env.AWS_REGION });
 const DYNAMODB_TABLE = process.env.DYNAMODB_TABLE as string;
 
-const updateFaceName = async (imageId: string, faceId: string, faceName: string) => {
-    const command = new UpdateItemCommand({
-        TableName: DYNAMODB_TABLE,
-        Key: {
-            PK: { S: `IMAGE#${imageId}` },
-            SK: { S: `FACE#${faceId}` },
-        },
-        UpdateExpression: 'SET #faceName = :faceName, #updatedAt = :updatedAt',
-        ExpressionAttributeNames: {
-            '#faceName': 'faceName',
-            '#updatedAt': 'updatedAt',
-        },
-        ExpressionAttributeValues: {
-            ':faceName': { S: faceName },
-            ':updatedAt': { S: new Date().toISOString() },
-        },
+interface FaceRow {
+    faceId: string;
+    boundingBox?: Record<string, unknown>;
+    confidence?: number;
+}
+
+const promoteFaceToNamed = async (
+    userId: string,
+    imageId: string,
+    face: FaceRow,
+    faceName: string,
+    originalSK: string,
+    fileName: string,
+) => {
+    const nowIso = new Date().toISOString();
+    const command = new TransactWriteItemsCommand({
+        TransactItems: [
+            {
+                Delete: {
+                    TableName: DYNAMODB_TABLE,
+                    Key: {
+                        PK: { S: userId },
+                        SK: { S: `PERSON#__UNNAMED__#${face.faceId}` },
+                    },
+                },
+            },
+            {
+                Put: {
+                    TableName: DYNAMODB_TABLE,
+                    Item: marshall(
+                        {
+                            PK: userId,
+                            SK: `PERSON#${faceName}#${face.faceId}`,
+                            faceName,
+                            faceId: face.faceId,
+                            imageId,
+                            originalSK,
+                            fileName,
+                            boundingBox: face.boundingBox,
+                            confidence: face.confidence,
+                            updatedAt: nowIso,
+                        },
+                        { removeUndefinedValues: true },
+                    ),
+                },
+            },
+            {
+                Update: {
+                    TableName: DYNAMODB_TABLE,
+                    Key: {
+                        PK: { S: `IMAGE#${imageId}` },
+                        SK: { S: `FACE#${face.faceId}` },
+                    },
+                    UpdateExpression: 'SET #faceName = :faceName, #updatedAt = :updatedAt',
+                    ExpressionAttributeNames: {
+                        '#faceName': 'faceName',
+                        '#updatedAt': 'updatedAt',
+                    },
+                    ExpressionAttributeValues: {
+                        ':faceName': { S: faceName },
+                        ':updatedAt': { S: nowIso },
+                    },
+                },
+            },
+        ],
     });
-    console.log(`Updating face name for imageId ${imageId}, faceId ${faceId} to ${faceName}`);
+    console.log(`Promoting faceId ${face.faceId} on imageId ${imageId} to name "${faceName}"`);
     await dynamoDbClient.send(command);
 };
 
@@ -60,7 +116,20 @@ const searchFaceMatches = async (collectionId: string, faceId: string) => {
     return response.FaceMatches || [];
 };
 
-const getFaceRecordsByImageId = async (imageId: string): Promise<string[]> => {
+const unmarshallBoundingBox = (raw?: AttributeValue): Record<string, unknown> | undefined => {
+    if (!raw?.M) return undefined;
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(raw.M)) {
+        if (value?.N !== undefined) {
+            out[key] = Number(value.N);
+        } else if (value?.S !== undefined) {
+            out[key] = value.S;
+        }
+    }
+    return out;
+};
+
+const getFaceRecordsByImageId = async (imageId: string): Promise<FaceRow[]> => {
     const params = {
         TableName: DYNAMODB_TABLE,
         KeyConditionExpression: 'PK = :pk',
@@ -70,30 +139,41 @@ const getFaceRecordsByImageId = async (imageId: string): Promise<string[]> => {
     };
 
     const result = await dynamoDbClient.send(new QueryCommand(params));
-    const faceIds: string[] = (result.Items ?? [])
-        .map((item) => item.SK?.S?.replace('FACE#', ''))
-        .filter((id): id is string => typeof id === 'string');
+    const rows: FaceRow[] = (result.Items ?? [])
+        .map((item) => {
+            const faceId = item.SK?.S?.startsWith('FACE#') ? item.SK.S.slice('FACE#'.length) : undefined;
+            if (!faceId) return null;
+            const confidenceRaw = item.confidence?.N;
+            return {
+                faceId,
+                boundingBox: unmarshallBoundingBox(item.boundingBox),
+                confidence: confidenceRaw !== undefined ? Number(confidenceRaw) : undefined,
+            } as FaceRow;
+        })
+        .filter((row): row is FaceRow => row !== null);
 
-    return faceIds;
+    return rows;
 };
 export const lambdaHandler = async (event: DynamoDBStreamEvent, _context: Context): Promise<void> => {
     for (const record of event.Records) {
         if (record.eventName === 'MODIFY' && record.dynamodb?.NewImage) {
             const newData = record.dynamodb.NewImage;
-            const imageId = newData.imageId.S;
-            const collectionId = newData.PK.S;
+            const imageId = newData.imageId?.S;
+            const collectionId = newData.PK?.S;
+            const originalSK = newData.SK?.S;
+            const fileName = newData.fileName?.S;
 
-            if (!collectionId || !imageId) {
-                console.warn(`Skipping record with missing collectionId or imageId: ${JSON.stringify(newData)}`);
+            if (!collectionId || !imageId || !originalSK || !fileName) {
+                console.warn(`Skipping record with missing required fields: ${JSON.stringify(newData)}`);
                 return;
             }
 
-            const faceIds = await getFaceRecordsByImageId(imageId);
+            const faces = await getFaceRecordsByImageId(imageId);
 
-            for (const faceId of faceIds) {
-                const matches = await searchFaceMatches(collectionId, faceId);
+            for (const face of faces) {
+                const matches = await searchFaceMatches(collectionId, face.faceId);
                 const topMatch = matches[0];
-                console.log(`Found match for faceId ${faceId}. topMatch: ${JSON.stringify(topMatch)}`);
+                console.log(`Found match for faceId ${face.faceId}. topMatch: ${JSON.stringify(topMatch)}`);
                 if (topMatch) {
                     const matchedImageId = topMatch.Face?.ImageId;
                     const matchedFaceId = topMatch.Face?.FaceId;
@@ -104,11 +184,11 @@ export const lambdaHandler = async (event: DynamoDBStreamEvent, _context: Contex
                         continue;
                     }
                     const faceName = await getFaceNameFromImageIdAndFaceId(matchedImageId, matchedFaceId);
-                    await updateFaceName(imageId, faceId, faceName);
+                    await promoteFaceToNamed(collectionId, imageId, face, faceName, originalSK, fileName);
                 }
             }
 
-            console.log(`Processed imageId ${imageId} with ${faceIds.length} faces.`);
+            console.log(`Processed imageId ${imageId} with ${faces.length} faces.`);
         }
     }
 };
